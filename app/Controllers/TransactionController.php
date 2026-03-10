@@ -50,6 +50,12 @@ class TransactionController extends BaseController
             return str_contains($haystack, mb_strtolower($filters['q']));
         }));
 
+        $activeTab = session()->getFlashdata('transaction_tab');
+
+        if (! in_array($activeTab, ['borrow', 'return', 'history'], true)) {
+            $activeTab = 'history';
+        }
+
         return view('transactions/index', [
             'pageTitle' => 'Peminjaman & Pengembalian',
             'activeMenu' => 'transactions',
@@ -60,6 +66,8 @@ class TransactionController extends BaseController
             'filters' => $filters,
             'defaultBorrowDate' => date('Y-m-d'),
             'defaultDueDate' => date('Y-m-d', strtotime('+' . $defaultLoanDays . ' days')),
+            'errors' => session('errors') ?? [],
+            'activeTab' => $activeTab,
         ]);
     }
 
@@ -74,7 +82,7 @@ class TransactionController extends BaseController
         ];
 
         if (! $this->validate($rules)) {
-            return redirect()->back()->withInput()->with('error', 'Data peminjaman belum valid.');
+            return $this->redirectTransactionBack('borrow', 'Data peminjaman belum valid.', $this->validator->getErrors());
         }
 
         $memberId = (int) $this->request->getPost('member_id');
@@ -85,15 +93,21 @@ class TransactionController extends BaseController
         $copy = $this->copyModel->find($copyId);
 
         if (! $member || (int) $member['is_active'] !== 1) {
-            return redirect()->back()->withInput()->with('error', 'Anggota tidak valid atau nonaktif.');
+            return $this->redirectTransactionBack('borrow', 'Anggota tidak valid atau nonaktif.', [
+                'member_id' => 'Anggota tidak valid atau sudah nonaktif.',
+            ]);
         }
 
         if (! $copy || $copy['status'] !== 'available') {
-            return redirect()->back()->withInput()->with('error', 'Copy buku tidak tersedia untuk dipinjam.');
+            return $this->redirectTransactionBack('borrow', 'Copy buku tidak tersedia untuk dipinjam.', [
+                'book_copy_id' => 'Copy buku yang dipilih sudah tidak tersedia.',
+            ]);
         }
 
         if (strtotime($dueAt) < strtotime($borrowedAt)) {
-            return redirect()->back()->withInput()->with('error', 'Tanggal jatuh tempo tidak boleh sebelum tanggal pinjam.');
+            return $this->redirectTransactionBack('borrow', 'Tanggal jatuh tempo tidak boleh sebelum tanggal pinjam.', [
+                'due_at' => 'Tanggal jatuh tempo harus sama atau setelah tanggal pinjam.',
+            ]);
         }
 
         service('libraryService')->borrowBookCopy(
@@ -105,7 +119,7 @@ class TransactionController extends BaseController
             trim((string) $this->request->getPost('notes'))
         );
 
-        return redirect()->to(site_url('transactions'))->with('success', 'Peminjaman berhasil dicatat.');
+        return redirect()->to(site_url('transactions'))->with('transaction_tab', 'borrow')->with('success', 'Peminjaman berhasil dicatat.');
     }
 
     public function return(): RedirectResponse
@@ -117,7 +131,7 @@ class TransactionController extends BaseController
         ];
 
         if (! $this->validate($rules)) {
-            return redirect()->back()->withInput()->with('error', 'Data pengembalian belum valid.');
+            return $this->redirectTransactionBack('return', 'Data pengembalian belum valid.', $this->validator->getErrors());
         }
 
         $loanId = (int) $this->request->getPost('loan_id');
@@ -125,11 +139,15 @@ class TransactionController extends BaseController
         $returnedAt = (string) $this->request->getPost('returned_at');
 
         if (! $loan || ! in_array($loan['status'], ['borrowed', 'overdue'], true)) {
-            return redirect()->back()->withInput()->with('error', 'Pinjaman aktif tidak ditemukan.');
+            return $this->redirectTransactionBack('return', 'Pinjaman aktif tidak ditemukan.', [
+                'loan_id' => 'Pinjaman aktif yang dipilih tidak ditemukan.',
+            ]);
         }
 
         if (strtotime($returnedAt) < strtotime(substr((string) $loan['borrowed_at'], 0, 10))) {
-            return redirect()->back()->withInput()->with('error', 'Tanggal kembali tidak boleh sebelum tanggal pinjam.');
+            return $this->redirectTransactionBack('return', 'Tanggal kembali tidak boleh sebelum tanggal pinjam.', [
+                'returned_at' => 'Tanggal kembali harus sama atau setelah tanggal pinjam.',
+            ]);
         }
 
         service('libraryService')->returnLoan(
@@ -138,7 +156,17 @@ class TransactionController extends BaseController
             trim((string) $this->request->getPost('notes'))
         );
 
-        return redirect()->to(site_url('transactions'))->with('success', 'Pengembalian berhasil dicatat.');
+        return redirect()->to(site_url('transactions'))->with('transaction_tab', 'return')->with('success', 'Pengembalian berhasil dicatat.');
+    }
+
+    private function redirectTransactionBack(string $tab, string $message, array $errors = []): RedirectResponse
+    {
+        return redirect()
+            ->back()
+            ->withInput()
+            ->with('transaction_tab', $tab)
+            ->with('errors', $errors)
+            ->with('error', $message);
     }
 
     private function availableCopies(): array

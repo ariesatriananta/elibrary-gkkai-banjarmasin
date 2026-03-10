@@ -42,3 +42,41 @@ if (! function_exists('person_initials')) {
         return $initials !== '' ? $initials : '--';
     }
 }
+
+if (! function_exists('field_error')) {
+    function field_error(array $errors, string $field): ?string
+    {
+        return $errors[$field] ?? null;
+    }
+}
+
+if (! function_exists('field_error_class')) {
+    function field_error_class(array $errors, string $field): string
+    {
+        return isset($errors[$field]) ? 'panel-input-error' : '';
+    }
+}
+
+if (! function_exists('loan_status_label')) {
+    function loan_status_label(string $status): string
+    {
+        return match ($status) {
+            'borrowed' => 'Dipinjam',
+            'overdue' => 'Terlambat',
+            'returned' => 'Dikembalikan',
+            default => ucfirst($status),
+        };
+    }
+}
+
+if (! function_exists('fine_status_label')) {
+    function fine_status_label(string $status): string
+    {
+        return match ($status) {
+            'unpaid' => 'Belum Lunas',
+            'partial' => 'Cicil',
+            'paid' => 'Lunas',
+            default => ucfirst($status),
+        };
+    }
+}

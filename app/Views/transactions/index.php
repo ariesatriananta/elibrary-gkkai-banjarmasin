@@ -1,18 +1,22 @@
 <?= $this->extend('layouts/admin') ?>
 
 <?= $this->section('content') ?>
+<?php
+$errors = $errors ?? [];
+$activeTab = $activeTab ?? 'history';
+?>
 <div>
   <h1 class="text-2xl font-bold tracking-tight">Peminjaman & Pengembalian</h1>
   <p class="text-slate-500">Catat peminjaman, pengembalian, dan pantau histori transaksi.</p>
 </div>
 
 <div class="inline-flex w-fit gap-1 rounded-lg bg-muted p-1">
-  <button class="transaction-tab rounded-lg px-4 py-2 text-sm font-medium text-slate-500" data-tab="borrow" type="button">Pinjam Buku</button>
-  <button class="transaction-tab rounded-lg px-4 py-2 text-sm font-medium text-slate-500" data-tab="return" type="button">Kembalikan Buku</button>
-  <button class="transaction-tab rounded-lg bg-primary/10 px-4 py-2 text-sm font-medium text-primary" data-tab="history" type="button">Riwayat</button>
+  <button class="transaction-tab rounded-lg px-4 py-2 text-sm font-medium <?= $activeTab === 'borrow' ? 'bg-primary/10 text-primary' : 'text-slate-500' ?>" data-tab="borrow" type="button">Pinjam Buku</button>
+  <button class="transaction-tab rounded-lg px-4 py-2 text-sm font-medium <?= $activeTab === 'return' ? 'bg-primary/10 text-primary' : 'text-slate-500' ?>" data-tab="return" type="button">Kembalikan Buku</button>
+  <button class="transaction-tab rounded-lg px-4 py-2 text-sm font-medium <?= $activeTab === 'history' ? 'bg-primary/10 text-primary' : 'text-slate-500' ?>" data-tab="history" type="button">Riwayat</button>
 </div>
 
-<div class="transaction-panel hidden" data-panel="borrow">
+<div class="transaction-panel <?= $activeTab === 'borrow' ? '' : 'hidden' ?>" data-panel="borrow">
   <div class="panel-card p-6">
     <h3 class="mb-4 text-base font-semibold">Form Peminjaman</h3>
     <?php if ($members === [] || $availableCopies === []): ?>
@@ -23,7 +27,7 @@
       <form method="post" action="<?= site_url('transactions/borrow') ?>" class="grid max-w-3xl grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label class="mb-1 block text-sm font-medium">Anggota</label>
-          <select name="member_id" class="panel-input" required>
+          <select name="member_id" class="panel-input <?= field_error_class($errors, 'member_id') ?>" required>
             <option value="">Pilih anggota</option>
             <?php foreach ($members as $member): ?>
               <option value="<?= esc((string) $member['id']) ?>" <?= old('member_id') === (string) $member['id'] ? 'selected' : '' ?>>
@@ -31,10 +35,13 @@
               </option>
             <?php endforeach; ?>
           </select>
+          <?php if (field_error($errors, 'member_id')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'member_id')) ?></p>
+          <?php endif; ?>
         </div>
         <div>
           <label class="mb-1 block text-sm font-medium">Copy Buku</label>
-          <select name="book_copy_id" class="panel-input" required>
+          <select name="book_copy_id" class="panel-input <?= field_error_class($errors, 'book_copy_id') ?>" required>
             <option value="">Pilih copy buku</option>
             <?php foreach ($availableCopies as $copy): ?>
               <option value="<?= esc((string) $copy['id']) ?>" <?= old('book_copy_id') === (string) $copy['id'] ? 'selected' : '' ?>>
@@ -42,18 +49,30 @@
               </option>
             <?php endforeach; ?>
           </select>
+          <?php if (field_error($errors, 'book_copy_id')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'book_copy_id')) ?></p>
+          <?php endif; ?>
         </div>
         <div>
           <label class="mb-1 block text-sm font-medium">Tanggal Pinjam</label>
-          <input type="date" name="borrowed_at" value="<?= esc(old('borrowed_at', $defaultBorrowDate)) ?>" class="panel-input" required>
+          <input type="date" name="borrowed_at" value="<?= esc(old('borrowed_at', $defaultBorrowDate)) ?>" class="panel-input <?= field_error_class($errors, 'borrowed_at') ?>" required>
+          <?php if (field_error($errors, 'borrowed_at')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'borrowed_at')) ?></p>
+          <?php endif; ?>
         </div>
         <div>
           <label class="mb-1 block text-sm font-medium">Tanggal Jatuh Tempo</label>
-          <input type="date" name="due_at" value="<?= esc(old('due_at', $defaultDueDate)) ?>" class="panel-input" required>
+          <input type="date" name="due_at" value="<?= esc(old('due_at', $defaultDueDate)) ?>" class="panel-input <?= field_error_class($errors, 'due_at') ?>" required>
+          <?php if (field_error($errors, 'due_at')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'due_at')) ?></p>
+          <?php endif; ?>
         </div>
         <div class="md:col-span-2">
           <label class="mb-1 block text-sm font-medium">Catatan</label>
-          <textarea name="notes" rows="3" class="panel-input"><?= esc(old('notes', '')) ?></textarea>
+          <textarea name="notes" rows="3" class="panel-input <?= field_error_class($errors, 'notes') ?>"><?= esc(old('notes', '')) ?></textarea>
+          <?php if (field_error($errors, 'notes')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'notes')) ?></p>
+          <?php endif; ?>
         </div>
         <div class="md:col-span-2">
           <button class="panel-button" type="submit">Simpan Peminjaman</button>
@@ -63,7 +82,7 @@
   </div>
 </div>
 
-<div class="transaction-panel hidden" data-panel="return">
+<div class="transaction-panel <?= $activeTab === 'return' ? '' : 'hidden' ?>" data-panel="return">
   <div class="panel-card p-6">
     <h3 class="mb-4 text-base font-semibold">Form Pengembalian</h3>
     <?php if ($activeLoans === []): ?>
@@ -72,7 +91,7 @@
       <form method="post" action="<?= site_url('transactions/return') ?>" class="grid max-w-3xl grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label class="mb-1 block text-sm font-medium">Pinjaman Aktif</label>
-          <select name="loan_id" class="panel-input" required>
+          <select name="loan_id" class="panel-input <?= field_error_class($errors, 'loan_id') ?>" required>
             <option value="">Pilih pinjaman aktif</option>
             <?php foreach ($activeLoans as $loan): ?>
               <option value="<?= esc((string) $loan['id']) ?>" <?= old('loan_id') === (string) $loan['id'] ? 'selected' : '' ?>>
@@ -80,14 +99,23 @@
               </option>
             <?php endforeach; ?>
           </select>
+          <?php if (field_error($errors, 'loan_id')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'loan_id')) ?></p>
+          <?php endif; ?>
         </div>
         <div>
           <label class="mb-1 block text-sm font-medium">Tanggal Kembali</label>
-          <input type="date" name="returned_at" value="<?= esc(old('returned_at', date('Y-m-d'))) ?>" class="panel-input" required>
+          <input type="date" name="returned_at" value="<?= esc(old('returned_at', date('Y-m-d'))) ?>" class="panel-input <?= field_error_class($errors, 'returned_at') ?>" required>
+          <?php if (field_error($errors, 'returned_at')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'returned_at')) ?></p>
+          <?php endif; ?>
         </div>
         <div class="md:col-span-2">
           <label class="mb-1 block text-sm font-medium">Catatan</label>
-          <textarea name="notes" rows="3" class="panel-input"><?= esc(old('notes', '')) ?></textarea>
+          <textarea name="notes" rows="3" class="panel-input <?= field_error_class($errors, 'notes') ?>"><?= esc(old('notes', '')) ?></textarea>
+          <?php if (field_error($errors, 'notes')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'notes')) ?></p>
+          <?php endif; ?>
         </div>
         <div class="md:col-span-2">
           <button class="panel-button-secondary" type="submit">Simpan Pengembalian</button>
@@ -97,7 +125,7 @@
   </div>
 </div>
 
-<div class="transaction-panel" data-panel="history">
+<div class="transaction-panel <?= $activeTab === 'history' ? '' : 'hidden' ?>" data-panel="history">
   <form method="get" action="<?= site_url('transactions') ?>" class="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-[1.3fr_0.7fr_auto]">
     <div class="relative">
       <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -153,7 +181,7 @@
                 <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($row['returned_at'] ? substr((string) $row['returned_at'], 0, 10) : '-') ?></td>
                 <td class="border-b border-border px-4 py-3">
                   <span class="status-badge status-badge-<?= esc($row['status']) ?>">
-                    <?= esc($row['status']) ?>
+                    <?= esc(loan_status_label($row['status'])) ?>
                   </span>
                 </td>
                 <td class="border-b border-border px-4 py-3 text-slate-500">
@@ -173,24 +201,36 @@
 <script>
   const tabs = document.querySelectorAll('.transaction-tab');
   const panels = document.querySelectorAll('.transaction-panel');
+  const initialTab = <?= json_encode($activeTab) ?>;
+
+  function openTransactionTab(target) {
+    tabs.forEach((item) => {
+      item.classList.remove('bg-primary/10', 'text-primary');
+      item.classList.add('text-slate-500');
+    });
+
+    panels.forEach((panel) => {
+      panel.classList.add('hidden');
+    });
+
+    const targetTab = document.querySelector(`[data-tab="${target}"]`);
+    const targetPanel = document.querySelector(`[data-panel="${target}"]`);
+
+    if (! targetTab || ! targetPanel) {
+      return;
+    }
+
+    targetTab.classList.add('bg-primary/10', 'text-primary');
+    targetTab.classList.remove('text-slate-500');
+    targetPanel.classList.remove('hidden');
+  }
 
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
-      const target = tab.dataset.tab;
-
-      tabs.forEach((item) => {
-        item.classList.remove('bg-primary/10', 'text-primary');
-        item.classList.add('text-slate-500');
-      });
-
-      panels.forEach((panel) => {
-        panel.classList.add('hidden');
-      });
-
-      tab.classList.add('bg-primary/10', 'text-primary');
-      tab.classList.remove('text-slate-500');
-      document.querySelector(`[data-panel="${target}"]`).classList.remove('hidden');
+      openTransactionTab(tab.dataset.tab);
     });
   });
+
+  openTransactionTab(initialTab);
 </script>
 <?= $this->endSection() ?>

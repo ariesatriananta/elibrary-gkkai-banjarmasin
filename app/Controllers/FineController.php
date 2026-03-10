@@ -34,6 +34,8 @@ class FineController extends BaseController
             'summary' => $this->summary($fines),
             'fines' => $fines,
             'bonusNotes' => $bonusNotes,
+            'errors' => session('errors') ?? [],
+            'fineContext' => session()->getFlashdata('fine_context') ?? [],
             'settings' => [
                 'fine_per_day' => service('libraryService')->getSettingNumber('fine_per_day', 1500),
                 'loan_duration_days' => service('libraryService')->getSettingNumber('loan_duration_days', 14),
@@ -49,7 +51,12 @@ class FineController extends BaseController
         ];
 
         if (! $this->validate($rules)) {
-            return redirect()->back()->with('error', 'Pengaturan denda belum valid.');
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('fine_context', ['panel' => 'settings'])
+                ->with('errors', $this->validator->getErrors())
+                ->with('error', 'Pengaturan denda belum valid.');
         }
 
         service('libraryService')->saveSettings(
@@ -70,10 +77,26 @@ class FineController extends BaseController
             return redirect()->to(site_url('fines'))->with('error', 'Data denda tidak ditemukan.');
         }
 
-        $paymentAmount = (float) $this->request->getPost('payment_amount');
+        $paymentInput = trim((string) $this->request->getPost('payment_amount'));
+        $paymentAmount = (float) $paymentInput;
+        $remainingAmount = max(0, (float) $fine['amount'] - (float) $fine['paid_amount']);
 
-        if ($paymentAmount <= 0) {
-            return redirect()->to(site_url('fines'))->with('error', 'Nominal pembayaran harus lebih dari nol.');
+        if ($paymentInput === '' || ! is_numeric($paymentInput) || $paymentAmount <= 0) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('fine_context', ['panel' => 'payment', 'fine_id' => $fineId])
+                ->with('errors', ['payment_amount' => 'Nominal pembayaran harus lebih dari nol.'])
+                ->with('error', 'Nominal pembayaran belum valid.');
+        }
+
+        if ($paymentAmount > $remainingAmount) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('fine_context', ['panel' => 'payment', 'fine_id' => $fineId])
+                ->with('errors', ['payment_amount' => 'Nominal melebihi sisa tagihan denda.'])
+                ->with('error', 'Nominal pembayaran melebihi sisa tagihan.');
         }
 
         service('libraryService')->payFine($fineId, $paymentAmount);
@@ -86,7 +109,12 @@ class FineController extends BaseController
         $note = trim((string) $this->request->getPost('note'));
 
         if ($note === '') {
-            return redirect()->to(site_url('fines'))->with('error', 'Catatan bonus tidak boleh kosong.');
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('fine_context', ['panel' => 'note', 'loan_id' => $loanId])
+                ->with('errors', ['note' => 'Catatan bonus tidak boleh kosong.'])
+                ->with('error', 'Catatan bonus tidak boleh kosong.');
         }
 
         service('libraryService')->addBonusNote($loanId, session('admin_id') ? (int) session('admin_id') : null, $note);

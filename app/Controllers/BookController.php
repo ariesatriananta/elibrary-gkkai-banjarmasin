@@ -69,7 +69,7 @@ class BookController extends BaseController
         $rules = $this->bookValidationRules(true);
 
         if (! $this->validate($rules)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+            return redirect()->back()->withInput()->with('copy_form', ['mode' => 'create'])->with('errors', $this->validator->getErrors());
         }
 
         $data = $this->collectBookPayload();
@@ -120,7 +120,7 @@ class BookController extends BaseController
         $rules = $this->bookValidationRules(false);
 
         if (! $this->validate($rules)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+            return redirect()->back()->withInput()->with('copy_form', ['mode' => 'edit', 'copy_id' => $copyId])->with('errors', $this->validator->getErrors());
         }
 
         $data = $this->collectBookPayload();
@@ -233,7 +233,7 @@ class BookController extends BaseController
                 ->first();
 
             if ($duplicate) {
-                return redirect()->back()->withInput()->with('errors', [
+                return redirect()->back()->withInput()->with('copy_form', ['mode' => 'edit', 'copy_id' => $copyId])->with('errors', [
                     'barcode_value' => 'Barcode sudah dipakai copy buku lain.',
                 ]);
             }

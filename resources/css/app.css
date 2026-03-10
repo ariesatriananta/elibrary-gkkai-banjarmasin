@@ -31,6 +31,10 @@
     @apply w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20;
   }
 
+  .panel-input-error {
+    @apply border-destructive focus:border-destructive focus:ring-destructive/20;
+  }
+
   .panel-button {
     @apply inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90;
   }
@@ -57,5 +61,13 @@
 
   .status-badge-returned {
     @apply bg-slate-200 text-slate-600;
+  }
+
+  .status-badge-partial {
+    @apply bg-warning/15 text-warning;
+  }
+
+  .field-error {
+    @apply mt-1 text-xs text-destructive;
   }
 }

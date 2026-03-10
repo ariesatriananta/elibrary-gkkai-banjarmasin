@@ -39,22 +39,34 @@ $errors = $errors ?? [];
 
         <div>
           <label for="joined_at" class="mb-1 block text-sm font-medium">Tanggal Bergabung</label>
-          <input id="joined_at" name="joined_at" type="date" value="<?= esc(old('joined_at', $member['joined_at'] ?? date('Y-m-d'))) ?>" class="panel-input">
+          <input id="joined_at" name="joined_at" type="date" value="<?= esc(old('joined_at', $member['joined_at'] ?? date('Y-m-d'))) ?>" class="panel-input <?= field_error_class($errors, 'joined_at') ?>">
+          <?php if (field_error($errors, 'joined_at')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'joined_at')) ?></p>
+          <?php endif; ?>
         </div>
 
         <div class="md:col-span-2">
           <label for="full_name" class="mb-1 block text-sm font-medium">Nama Lengkap</label>
-          <input id="full_name" name="full_name" type="text" value="<?= esc(old('full_name', $member['full_name'] ?? '')) ?>" class="panel-input" required>
+          <input id="full_name" name="full_name" type="text" value="<?= esc(old('full_name', $member['full_name'] ?? '')) ?>" class="panel-input <?= field_error_class($errors, 'full_name') ?>" required>
+          <?php if (field_error($errors, 'full_name')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'full_name')) ?></p>
+          <?php endif; ?>
         </div>
 
         <div>
           <label for="phone" class="mb-1 block text-sm font-medium">Telepon</label>
-          <input id="phone" name="phone" type="text" value="<?= esc(old('phone', $member['phone'] ?? '')) ?>" class="panel-input">
+          <input id="phone" name="phone" type="text" value="<?= esc(old('phone', $member['phone'] ?? '')) ?>" class="panel-input <?= field_error_class($errors, 'phone') ?>">
+          <?php if (field_error($errors, 'phone')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'phone')) ?></p>
+          <?php endif; ?>
         </div>
 
         <div>
           <label for="email" class="mb-1 block text-sm font-medium">Email</label>
-          <input id="email" name="email" type="email" value="<?= esc(old('email', $member['email'] ?? '')) ?>" class="panel-input">
+          <input id="email" name="email" type="email" value="<?= esc(old('email', $member['email'] ?? '')) ?>" class="panel-input <?= field_error_class($errors, 'email') ?>">
+          <?php if (field_error($errors, 'email')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'email')) ?></p>
+          <?php endif; ?>
         </div>
 
         <div class="md:col-span-2">
@@ -160,7 +172,7 @@ $errors = $errors ?? [];
                 <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($item['returned_at'] ? substr((string) $item['returned_at'], 0, 10) : '-') ?></td>
                 <td class="border-b border-border px-4 py-3">
                   <span class="status-badge status-badge-<?= esc($item['status']) ?>">
-                    <?= esc($item['status']) ?>
+                    <?= esc(loan_status_label($item['status'])) ?>
                   </span>
                 </td>
                 <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(isset($item['fine_amount']) ? rupiah($item['fine_amount']) : '-') ?></td>

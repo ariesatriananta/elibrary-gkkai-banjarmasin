@@ -6,6 +6,7 @@ $isEdit = $mode === 'edit';
 $bookId = $book['id'] ?? null;
 $formAction = $isEdit ? site_url('books/' . $bookId) : site_url('books');
 $errors = $errors ?? [];
+$copyForm = session()->getFlashdata('copy_form') ?? [];
 ?>
 
 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -37,22 +38,31 @@ $errors = $errors ?? [];
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div class="md:col-span-2">
           <label for="title" class="mb-1 block text-sm font-medium">Judul Buku</label>
-          <input id="title" name="title" type="text" value="<?= esc(old('title', $book['title'] ?? '')) ?>" class="panel-input" required>
+          <input id="title" name="title" type="text" value="<?= esc(old('title', $book['title'] ?? '')) ?>" class="panel-input <?= field_error_class($errors, 'title') ?>" required>
+          <?php if (field_error($errors, 'title')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'title')) ?></p>
+          <?php endif; ?>
         </div>
 
         <div>
           <label for="author" class="mb-1 block text-sm font-medium">Pengarang</label>
-          <input id="author" name="author" type="text" value="<?= esc(old('author', $book['author'] ?? '')) ?>" class="panel-input" required>
+          <input id="author" name="author" type="text" value="<?= esc(old('author', $book['author'] ?? '')) ?>" class="panel-input <?= field_error_class($errors, 'author') ?>" required>
+          <?php if (field_error($errors, 'author')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'author')) ?></p>
+          <?php endif; ?>
         </div>
 
         <div>
           <label for="publisher" class="mb-1 block text-sm font-medium">Penerbit</label>
-          <input id="publisher" name="publisher" type="text" value="<?= esc(old('publisher', $book['publisher'] ?? '')) ?>" class="panel-input">
+          <input id="publisher" name="publisher" type="text" value="<?= esc(old('publisher', $book['publisher'] ?? '')) ?>" class="panel-input <?= field_error_class($errors, 'publisher') ?>">
+          <?php if (field_error($errors, 'publisher')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'publisher')) ?></p>
+          <?php endif; ?>
         </div>
 
         <div>
           <label for="category_id" class="mb-1 block text-sm font-medium">Kategori</label>
-          <select id="category_id" name="category_id" class="panel-input">
+          <select id="category_id" name="category_id" class="panel-input <?= field_error_class($errors, 'category_id') ?>">
             <option value="">Pilih kategori</option>
             <?php foreach ($categories as $category): ?>
               <?php $selectedCategory = old('category_id', $book['category_id'] ?? ''); ?>
@@ -61,11 +71,14 @@ $errors = $errors ?? [];
               </option>
             <?php endforeach; ?>
           </select>
+          <?php if (field_error($errors, 'category_id')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'category_id')) ?></p>
+          <?php endif; ?>
         </div>
 
         <div>
           <label for="age_classification_id" class="mb-1 block text-sm font-medium">Klasifikasi Usia</label>
-          <select id="age_classification_id" name="age_classification_id" class="panel-input">
+          <select id="age_classification_id" name="age_classification_id" class="panel-input <?= field_error_class($errors, 'age_classification_id') ?>">
             <option value="">Pilih klasifikasi</option>
             <?php foreach ($ageClassifications as $classification): ?>
               <?php $selectedClassification = old('age_classification_id', $book['age_classification_id'] ?? ''); ?>
@@ -74,37 +87,58 @@ $errors = $errors ?? [];
               </option>
             <?php endforeach; ?>
           </select>
+          <?php if (field_error($errors, 'age_classification_id')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'age_classification_id')) ?></p>
+          <?php endif; ?>
         </div>
 
         <div>
           <label for="isbn" class="mb-1 block text-sm font-medium">ISBN / Kode Referensi</label>
-          <input id="isbn" name="isbn" type="text" value="<?= esc(old('isbn', $book['isbn'] ?? '')) ?>" class="panel-input">
+          <input id="isbn" name="isbn" type="text" value="<?= esc(old('isbn', $book['isbn'] ?? '')) ?>" class="panel-input <?= field_error_class($errors, 'isbn') ?>">
+          <?php if (field_error($errors, 'isbn')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'isbn')) ?></p>
+          <?php endif; ?>
         </div>
 
         <div>
           <label for="publication_year" class="mb-1 block text-sm font-medium">Tahun Terbit</label>
-          <input id="publication_year" name="publication_year" type="number" value="<?= esc(old('publication_year', $book['publication_year'] ?? '')) ?>" class="panel-input" min="1000" max="2100">
+          <input id="publication_year" name="publication_year" type="number" value="<?= esc(old('publication_year', $book['publication_year'] ?? '')) ?>" class="panel-input <?= field_error_class($errors, 'publication_year') ?>" min="1000" max="2100">
+          <?php if (field_error($errors, 'publication_year')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'publication_year')) ?></p>
+          <?php endif; ?>
         </div>
 
         <div>
           <label for="page_count" class="mb-1 block text-sm font-medium">Jumlah Halaman</label>
-          <input id="page_count" name="page_count" type="number" value="<?= esc(old('page_count', $book['page_count'] ?? '')) ?>" class="panel-input" min="1">
+          <input id="page_count" name="page_count" type="number" value="<?= esc(old('page_count', $book['page_count'] ?? '')) ?>" class="panel-input <?= field_error_class($errors, 'page_count') ?>" min="1">
+          <?php if (field_error($errors, 'page_count')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'page_count')) ?></p>
+          <?php endif; ?>
         </div>
 
         <div>
           <label for="shelf_location" class="mb-1 block text-sm font-medium">No Rak / Lokasi</label>
-          <input id="shelf_location" name="shelf_location" type="text" value="<?= esc(old('shelf_location', $book['shelf_location'] ?? '')) ?>" class="panel-input">
+          <input id="shelf_location" name="shelf_location" type="text" value="<?= esc(old('shelf_location', $book['shelf_location'] ?? '')) ?>" class="panel-input <?= field_error_class($errors, 'shelf_location') ?>">
+          <?php if (field_error($errors, 'shelf_location')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'shelf_location')) ?></p>
+          <?php endif; ?>
         </div>
 
         <div>
           <label for="legacy_status" class="mb-1 block text-sm font-medium">Status Data Lama</label>
-          <input id="legacy_status" name="legacy_status" type="text" value="<?= esc(old('legacy_status', $book['legacy_status'] ?? '')) ?>" class="panel-input" placeholder="Contoh: BUKU BARU">
+          <input id="legacy_status" name="legacy_status" type="text" value="<?= esc(old('legacy_status', $book['legacy_status'] ?? '')) ?>" class="panel-input <?= field_error_class($errors, 'legacy_status') ?>" placeholder="Contoh: BUKU BARU">
+          <?php if (field_error($errors, 'legacy_status')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'legacy_status')) ?></p>
+          <?php endif; ?>
         </div>
 
         <?php if (! $isEdit): ?>
           <div>
             <label for="initial_copies" class="mb-1 block text-sm font-medium">Jumlah Copy Awal</label>
-            <input id="initial_copies" name="initial_copies" type="number" value="<?= esc(old('initial_copies', '1')) ?>" class="panel-input" min="1" max="100">
+            <input id="initial_copies" name="initial_copies" type="number" value="<?= esc(old('initial_copies', '1')) ?>" class="panel-input <?= field_error_class($errors, 'initial_copies') ?>" min="1" max="100">
+            <?php if (field_error($errors, 'initial_copies')): ?>
+              <p class="field-error mt-1"><?= esc(field_error($errors, 'initial_copies')) ?></p>
+            <?php endif; ?>
           </div>
         <?php endif; ?>
 
@@ -134,8 +168,11 @@ $errors = $errors ?? [];
 
         <div>
           <label for="cover" class="mb-1 block text-sm font-medium">Upload Cover Baru</label>
-          <input id="cover" name="cover" type="file" accept=".jpg,.jpeg,.png,.webp" class="panel-input">
+          <input id="cover" name="cover" type="file" accept=".jpg,.jpeg,.png,.webp" class="panel-input <?= field_error_class($errors, 'cover') ?>">
           <p class="mt-1 text-xs text-slate-500">Format JPG, PNG, WEBP. Maksimal 2MB.</p>
+          <?php if (field_error($errors, 'cover')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'cover')) ?></p>
+          <?php endif; ?>
         </div>
 
         <?php if ($isEdit && ! empty($book['cover_path'])): ?>
@@ -226,20 +263,42 @@ $errors = $errors ?? [];
             </tr>
           <?php else: ?>
             <?php foreach ($copies as $copy): ?>
+              <?php $isCopyEditError = ($copyForm['mode'] ?? null) === 'edit' && (int) ($copyForm['copy_id'] ?? 0) === (int) $copy['id']; ?>
               <tr class="align-top text-sm">
                 <td class="border-b border-border px-3 py-3 font-medium"><?= esc($copy['copy_code']) ?></td>
                 <td class="border-b border-border px-3 py-3" colspan="4">
                   <form method="post" action="<?= site_url('books/' . $bookId . '/copies/' . $copy['id']) ?>" class="grid grid-cols-1 gap-3 lg:grid-cols-[0.9fr_1fr_0.8fr_1.2fr_auto]">
-                    <input type="text" name="legacy_code" value="<?= esc($copy['legacy_code'] ?? '') ?>" class="panel-input" placeholder="Kode lama">
-                    <input type="text" name="barcode_value" value="<?= esc($copy['barcode_value'] ?? '') ?>" class="panel-input" placeholder="Barcode manual">
-                    <select name="status" class="panel-input">
-                      <?php foreach ($copyStatuses as $statusValue => $statusLabel): ?>
-                        <option value="<?= esc($statusValue) ?>" <?= $copy['status'] === $statusValue ? 'selected' : '' ?>>
-                          <?= esc($statusLabel) ?>
-                        </option>
-                      <?php endforeach; ?>
-                    </select>
-                    <input type="text" name="notes" value="<?= esc($copy['notes'] ?? '') ?>" class="panel-input" placeholder="Catatan copy">
+                    <div>
+                      <input type="text" name="legacy_code" value="<?= esc($isCopyEditError ? old('legacy_code', $copy['legacy_code'] ?? '') : ($copy['legacy_code'] ?? '')) ?>" class="panel-input <?= $isCopyEditError ? field_error_class($errors, 'legacy_code') : '' ?>" placeholder="Kode lama">
+                      <?php if ($isCopyEditError && field_error($errors, 'legacy_code')): ?>
+                        <p class="field-error mt-1"><?= esc(field_error($errors, 'legacy_code')) ?></p>
+                      <?php endif; ?>
+                    </div>
+                    <div>
+                      <input type="text" name="barcode_value" value="<?= esc($isCopyEditError ? old('barcode_value', $copy['barcode_value'] ?? '') : ($copy['barcode_value'] ?? '')) ?>" class="panel-input <?= $isCopyEditError ? field_error_class($errors, 'barcode_value') : '' ?>" placeholder="Barcode manual">
+                      <?php if ($isCopyEditError && field_error($errors, 'barcode_value')): ?>
+                        <p class="field-error mt-1"><?= esc(field_error($errors, 'barcode_value')) ?></p>
+                      <?php endif; ?>
+                    </div>
+                    <div>
+                      <select name="status" class="panel-input <?= $isCopyEditError ? field_error_class($errors, 'status') : '' ?>">
+                        <?php $selectedCopyStatus = $isCopyEditError ? old('status', $copy['status']) : $copy['status']; ?>
+                        <?php foreach ($copyStatuses as $statusValue => $statusLabel): ?>
+                          <option value="<?= esc($statusValue) ?>" <?= $selectedCopyStatus === $statusValue ? 'selected' : '' ?>>
+                            <?= esc($statusLabel) ?>
+                          </option>
+                        <?php endforeach; ?>
+                      </select>
+                      <?php if ($isCopyEditError && field_error($errors, 'status')): ?>
+                        <p class="field-error mt-1"><?= esc(field_error($errors, 'status')) ?></p>
+                      <?php endif; ?>
+                    </div>
+                    <div>
+                      <input type="text" name="notes" value="<?= esc($isCopyEditError ? old('notes', $copy['notes'] ?? '') : ($copy['notes'] ?? '')) ?>" class="panel-input <?= $isCopyEditError ? field_error_class($errors, 'notes') : '' ?>" placeholder="Catatan copy">
+                      <?php if ($isCopyEditError && field_error($errors, 'notes')): ?>
+                        <p class="field-error mt-1"><?= esc(field_error($errors, 'notes')) ?></p>
+                      <?php endif; ?>
+                    </div>
                     <button type="submit" class="panel-button-secondary justify-center">Simpan</button>
                   </form>
                 </td>
@@ -261,15 +320,36 @@ $errors = $errors ?? [];
       <h3 class="text-base font-semibold">Tambah Copy Baru</h3>
       <p class="mb-4 mt-1 text-sm text-slate-500">Sistem akan membuat kode copy baru otomatis.</p>
 
+      <?php $isCopyCreateError = ($copyForm['mode'] ?? null) === 'create'; ?>
       <form method="post" action="<?= site_url('books/' . $bookId . '/copies') ?>" class="grid grid-cols-1 gap-3 lg:grid-cols-[0.8fr_1fr_0.8fr_1.2fr_auto]">
-        <input type="text" name="legacy_code" class="panel-input" placeholder="Kode lama">
-        <input type="text" name="barcode_value" class="panel-input" placeholder="Barcode manual">
-        <select name="status" class="panel-input">
-          <?php foreach ($copyStatuses as $statusValue => $statusLabel): ?>
-            <option value="<?= esc($statusValue) ?>"><?= esc($statusLabel) ?></option>
-          <?php endforeach; ?>
-        </select>
-        <input type="text" name="notes" class="panel-input" placeholder="Catatan copy">
+        <div>
+          <input type="text" name="legacy_code" value="<?= esc($isCopyCreateError ? old('legacy_code') : '') ?>" class="panel-input <?= $isCopyCreateError ? field_error_class($errors, 'legacy_code') : '' ?>" placeholder="Kode lama">
+          <?php if ($isCopyCreateError && field_error($errors, 'legacy_code')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'legacy_code')) ?></p>
+          <?php endif; ?>
+        </div>
+        <div>
+          <input type="text" name="barcode_value" value="<?= esc($isCopyCreateError ? old('barcode_value') : '') ?>" class="panel-input <?= $isCopyCreateError ? field_error_class($errors, 'barcode_value') : '' ?>" placeholder="Barcode manual">
+          <?php if ($isCopyCreateError && field_error($errors, 'barcode_value')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'barcode_value')) ?></p>
+          <?php endif; ?>
+        </div>
+        <div>
+          <select name="status" class="panel-input <?= $isCopyCreateError ? field_error_class($errors, 'status') : '' ?>">
+            <?php foreach ($copyStatuses as $statusValue => $statusLabel): ?>
+              <option value="<?= esc($statusValue) ?>" <?= old('status', 'available') === $statusValue ? 'selected' : '' ?>><?= esc($statusLabel) ?></option>
+            <?php endforeach; ?>
+          </select>
+          <?php if ($isCopyCreateError && field_error($errors, 'status')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'status')) ?></p>
+          <?php endif; ?>
+        </div>
+        <div>
+          <input type="text" name="notes" value="<?= esc($isCopyCreateError ? old('notes') : '') ?>" class="panel-input <?= $isCopyCreateError ? field_error_class($errors, 'notes') : '' ?>" placeholder="Catatan copy">
+          <?php if ($isCopyCreateError && field_error($errors, 'notes')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'notes')) ?></p>
+          <?php endif; ?>
+        </div>
         <button type="submit" class="panel-button justify-center">Tambah Copy</button>
       </form>
     </div>
