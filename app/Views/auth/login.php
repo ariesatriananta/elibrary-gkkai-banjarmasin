@@ -6,14 +6,15 @@
   <title>Login - <?= esc(library_brand_name()) ?></title>
   <meta name="description" content="<?= esc(library_meta_description()) ?>">
   <meta name="application-name" content="<?= esc(library_brand_name()) ?>">
-  <meta name="theme-color" content="#4c7a5e">
+  <meta id="theme-color-meta" name="theme-color" content="#4c7a5e">
   <link rel="icon" href="<?= base_url('favicon.ico') ?>" sizes="any">
   <link rel="icon" type="image/png" href="<?= library_logo_url() ?>">
   <link rel="apple-touch-icon" href="<?= library_logo_url() ?>">
   <link rel="manifest" href="<?= base_url('site.webmanifest') ?>">
+  <?= $this->include('partials/theme_head') ?>
   <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
 </head>
-<body class="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(76,122,94,0.14),_transparent_42%),linear-gradient(180deg,_#f7f5ef_0%,_#f1ede5_100%)]">
+<body class="auth-shell min-h-screen">
   <div class="flex min-h-screen items-center justify-center px-4 py-8 lg:px-8">
     <div class="grid w-full max-w-6xl gap-6 lg:grid-cols-[1.15fr_0.85fr]">
       <div class="relative hidden min-h-[720px] overflow-hidden rounded-[2rem] border border-white/30 shadow-panel lg:block">

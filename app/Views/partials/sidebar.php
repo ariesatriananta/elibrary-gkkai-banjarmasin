@@ -1,15 +1,15 @@
 <?php $activeMenu = $activeMenu ?? ''; ?>
-<aside class="w-72 flex-shrink-0 border-r border-border bg-white">
-  <div class="border-b border-border p-4">
+<aside class="glass-sidebar app-sticky-sidebar w-72 flex-shrink-0">
+  <div class="table-divider p-4">
     <div class="flex items-center gap-3">
-      <img src="<?= library_logo_url() ?>" alt="<?= esc(library_brand_name()) ?>" class="h-12 w-12 rounded-xl border border-border bg-white object-contain p-1">
+      <img src="<?= library_logo_url() ?>" alt="<?= esc(library_brand_name()) ?>" class="h-12 w-12 rounded-xl border border-white/70 bg-white/75 object-contain p-1.5 shadow-sm">
       <div class="min-w-0 leading-tight">
         <p class="text-sm font-semibold"><?= esc(library_brand_name()) ?></p>
       </div>
     </div>
   </div>
 
-  <nav class="space-y-1 p-3">
+  <nav class="space-y-1.5 p-3">
     <p class="px-3 py-2 text-xs font-medium text-slate-500">Navigasi</p>
 
     <a href="<?= site_url('/') ?>" class="sidebar-link <?= $activeMenu === 'dashboard' ? 'sidebar-link-active' : '' ?>">

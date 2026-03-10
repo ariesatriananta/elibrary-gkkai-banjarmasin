@@ -6,45 +6,72 @@
   <title><?= esc($pageTitle ?? library_brand_name()) ?> - <?= esc(library_brand_name()) ?></title>
   <meta name="description" content="<?= esc(library_meta_description()) ?>">
   <meta name="application-name" content="<?= esc(library_brand_name()) ?>">
-  <meta name="theme-color" content="#4c7a5e">
+  <meta id="theme-color-meta" name="theme-color" content="#4c7a5e">
   <link rel="icon" href="<?= base_url('favicon.ico') ?>" sizes="any">
   <link rel="icon" type="image/png" href="<?= library_logo_url() ?>">
   <link rel="apple-touch-icon" href="<?= library_logo_url() ?>">
   <link rel="manifest" href="<?= base_url('site.webmanifest') ?>">
+  <?= $this->include('partials/theme_head') ?>
   <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
 </head>
-<body>
-  <div class="min-h-screen flex w-full">
+<body class="app-shell">
+  <div class="pointer-events-none fixed inset-0 overflow-hidden">
+    <div class="page-orb page-orb-primary left-[-10rem] top-[-8rem] h-72 w-72"></div>
+    <div class="page-orb page-orb-accent right-[-6rem] top-16 h-64 w-64"></div>
+    <div class="page-orb page-orb-neutral bottom-[-7rem] left-1/3 h-72 w-72"></div>
+  </div>
+
+  <div class="relative flex min-h-screen items-start gap-4 px-4 py-4">
     <?= $this->include('partials/sidebar') ?>
 
-    <main class="flex min-h-screen flex-1 flex-col">
-      <header class="flex min-h-[4.5rem] items-center justify-between border-b border-border bg-white px-4 py-3">
+    <main class="min-w-0 flex-1 pr-1">
+      <header class="glass-header app-sticky-header mb-4 flex min-h-[4.75rem] items-center justify-between px-5 py-3">
         <div class="min-w-0">
           <p class="truncate text-lg font-semibold tracking-tight"><?= esc(library_brand_name()) ?></p>
           <p class="truncate text-xs text-slate-500"><?= esc(church_name()) ?></p>
         </div>
         <div class="flex items-center gap-3">
+          <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Ubah tema tampilan" aria-pressed="false">
+            <span class="theme-toggle-icon theme-toggle-icon-sun" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2.5"></path>
+                <path d="M12 19.5V22"></path>
+                <path d="M4.93 4.93l1.77 1.77"></path>
+                <path d="M17.3 17.3l1.77 1.77"></path>
+                <path d="M2 12h2.5"></path>
+                <path d="M19.5 12H22"></path>
+                <path d="M4.93 19.07l1.77-1.77"></path>
+                <path d="M17.3 6.7l1.77-1.77"></path>
+              </svg>
+            </span>
+            <span class="theme-toggle-icon theme-toggle-icon-moon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+              </svg>
+            </span>
+          </button>
           <div class="text-right leading-tight">
             <p class="text-sm font-medium"><?= esc(session('admin_name') ?? 'Petugas') ?></p>
             <p class="text-xs text-slate-500">Admin Perpustakaan</p>
           </div>
           <form method="post" action="<?= site_url('logout') ?>">
-            <button type="submit" class="rounded-lg border border-border px-3 py-2 text-xs font-medium text-slate-600 hover:bg-muted">
+            <button type="submit" class="panel-button-secondary text-xs">
               Logout
             </button>
           </form>
         </div>
       </header>
 
-      <div class="flex-1 space-y-6 overflow-auto p-6">
+      <div class="space-y-6 px-1 pb-6">
         <?php if (session()->getFlashdata('success')): ?>
-          <div class="rounded-xl border border-success/20 bg-success/10 px-4 py-3 text-sm text-success">
+          <div class="glass-alert border-success/20 bg-success/10 text-success">
             <?= esc(session()->getFlashdata('success')) ?>
           </div>
         <?php endif; ?>
 
         <?php if (session()->getFlashdata('error')): ?>
-          <div class="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <div class="glass-alert border-destructive/20 bg-destructive/10 text-destructive">
             <?= esc(session()->getFlashdata('error')) ?>
           </div>
         <?php endif; ?>
@@ -54,6 +81,41 @@
     </main>
   </div>
 
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const button = document.getElementById('theme-toggle');
+      const themeColorMeta = document.getElementById('theme-color-meta');
+      const colors = {
+        light: '#4c7a5e',
+        dark: '#0f172a',
+      };
+
+      const applyTheme = (theme) => {
+        root.setAttribute('data-theme', theme);
+        button?.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+
+        if (themeColorMeta) {
+          themeColorMeta.setAttribute('content', colors[theme] ?? colors.light);
+        }
+      };
+
+      const getCurrentTheme = () => root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+
+      applyTheme(getCurrentTheme());
+
+      button?.addEventListener('click', () => {
+        const nextTheme = getCurrentTheme() === 'dark' ? 'light' : 'dark';
+        applyTheme(nextTheme);
+
+        try {
+          window.localStorage.setItem('library-theme', nextTheme);
+        } catch (error) {
+          // Ignore storage errors and keep the theme in memory.
+        }
+      });
+    })();
+  </script>
   <?= $this->renderSection('scripts') ?>
 </body>
 </html>
