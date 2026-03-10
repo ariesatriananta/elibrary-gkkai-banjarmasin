@@ -80,3 +80,38 @@ if (! function_exists('fine_status_label')) {
         };
     }
 }
+
+if (! function_exists('library_brand_name')) {
+    function library_brand_name(): string
+    {
+        return 'Perpustakaan GKKA-I Banjarmasin';
+    }
+}
+
+if (! function_exists('church_name')) {
+    function church_name(): string
+    {
+        return 'GKKA INDONESIA Jemaat Banjarmasin';
+    }
+}
+
+if (! function_exists('church_address')) {
+    function church_address(): string
+    {
+        return 'Jl. Veteran No. 85 RT. 11, Kelurahan Melayu, Banjarmasin Tengah, Kalimantan Selatan, 70234.';
+    }
+}
+
+if (! function_exists('library_logo_url')) {
+    function library_logo_url(): string
+    {
+        return base_url('logo.png');
+    }
+}
+
+if (! function_exists('library_meta_description')) {
+    function library_meta_description(): string
+    {
+        return library_brand_name() . ' - Sistem perpustakaan digital untuk ' . church_name() . '.';
+    }
+}

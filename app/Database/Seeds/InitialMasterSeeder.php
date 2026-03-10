@@ -52,7 +52,7 @@ class InitialMasterSeeder extends Seeder
         $this->db->table('settings')->insertBatch([
             [
                 'setting_key' => 'library_name',
-                'setting_value' => 'Elibrary GKKAI',
+                'setting_value' => 'Perpustakaan GKKA-I Banjarmasin',
                 'value_type' => 'string',
                 'label' => 'Nama Perpustakaan',
                 'created_at' => $now,

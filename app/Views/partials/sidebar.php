@@ -1,15 +1,11 @@
 <?php $activeMenu = $activeMenu ?? ''; ?>
-<aside class="w-64 flex-shrink-0 border-r border-border bg-white">
-  <div class="flex items-center gap-2 border-b border-border p-4">
-    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-      <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-      </svg>
-    </div>
-    <div class="leading-tight">
-      <p class="text-sm font-semibold">Elibrary GKKAI</p>
-      <p class="text-xs text-slate-500">Sistem Perpustakaan</p>
+<aside class="w-72 flex-shrink-0 border-r border-border bg-white">
+  <div class="border-b border-border p-4">
+    <div class="flex items-center gap-3">
+      <img src="<?= library_logo_url() ?>" alt="<?= esc(library_brand_name()) ?>" class="h-12 w-12 rounded-xl border border-border bg-white object-contain p-1">
+      <div class="min-w-0 leading-tight">
+        <p class="text-sm font-semibold"><?= esc(library_brand_name()) ?></p>
+      </div>
     </div>
   </div>
 

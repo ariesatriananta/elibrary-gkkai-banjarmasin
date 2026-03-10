@@ -1,0 +1,24 @@
+Options -Indexes
+DirectoryIndex public/index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block direct access to internal application folders and development files.
+    RewriteRule ^(?:app|vendor|writable|tests|node_modules|resources|docs|deploy|tools)(?:/|$) - [F,L,NC]
+    RewriteRule ^(?:\.env|env|composer\.(?:json|lock)|package(?:-lock)?\.json|tailwind\.config\.js|phpunit\.xml\.dist|preload\.php|spark|README\.md|LICENSE|builds)$ - [F,L,NC]
+    RewriteRule ^(?:index|books|members|transactions|fines)\.html$ - [F,L,NC]
+
+    # Expose assets from the public directory without requiring "/public" in the URL.
+    RewriteRule ^assets/(.*)$ public/assets/$1 [L,NC]
+    RewriteRule ^favicon\.ico$ public/favicon.ico [L,NC]
+    RewriteRule ^robots\.txt$ public/robots.txt [L,NC]
+
+    RewriteRule ^$ public/index.php [L]
+
+    # Route all application requests through the standard CI4 front controller.
+    RewriteCond %{REQUEST_URI} !^/public/ [NC]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ public/index.php/$1 [L,NC,QSA]
+</IfModule>
