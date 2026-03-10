@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fines - Grace Chapel Library</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: 'hsl(158 30% 38%)', foreground: '#fff' },
+            accent: { DEFAULT: 'hsl(35 60% 55%)' },
+            info: { DEFAULT: 'hsl(200 60% 50%)' },
+            success: { DEFAULT: 'hsl(158 40% 42%)' },
+            destructive: { DEFAULT: 'hsl(0 65% 55%)' },
+            muted: { DEFAULT: 'hsl(40 15% 94%)', foreground: 'hsl(220 10% 46%)' },
+            border: 'hsl(40 15% 89%)',
+            background: 'hsl(40 20% 97%)',
+            foreground: 'hsl(220 20% 15%)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: hsl(40 20% 97%); color: hsl(220 20% 15%); }
+    .sidebar-link { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: hsl(220 15% 30%); text-decoration: none; }
+    .sidebar-link:hover { background: hsl(158 20% 95%); }
+    .sidebar-link.active { background: hsl(158 20% 95%); color: hsl(158 30% 30%); font-weight: 500; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 0.75rem; font-weight: 500; color: hsl(220 10% 46%); padding: 0.75rem 1rem; border-bottom: 1px solid hsl(40 15% 89%); }
+    td { padding: 0.75rem 1rem; border-bottom: 1px solid hsl(40 15% 89%); font-size: 0.875rem; }
+  </style>
+</head>
+<body>
+  <div class="min-h-screen flex w-full">
+    <aside class="w-64 border-r bg-white flex-shrink-0">
+      <div class="p-4 flex items-center gap-2 border-b">
+        <div class="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
+          <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+        </div>
+        <div class="leading-tight"><p class="font-semibold text-sm">Church Library</p><p class="text-xs text-muted-foreground">Management System</p></div>
+      </div>
+      <nav class="p-3 space-y-1">
+        <p class="text-xs font-medium text-muted-foreground px-3 py-2">Navigation</p>
+        <a href="index.html" class="sidebar-link"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+        <a href="books.html" class="sidebar-link"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Books</a>
+        <a href="members.html" class="sidebar-link"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/></svg>Members</a>
+        <a href="transactions.html" class="sidebar-link"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 3l4 4-4 4"/><path d="M16 21l-4-4 4-4"/></svg>Transactions</a>
+        <a href="fines.html" class="sidebar-link active"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Fines</a>
+      </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col">
+      <header class="h-14 flex items-center border-b px-4 bg-white"><span class="text-lg font-semibold tracking-tight">Grace Chapel Library</span></header>
+      <div class="flex-1 p-6 overflow-auto space-y-6">
+        <div><h1 class="text-2xl font-bold tracking-tight">Fines</h1><p class="text-muted-foreground">Track and manage overdue fines</p></div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-white rounded-xl border shadow-sm p-5 text-center">
+            <p class="text-sm text-muted-foreground">Total Fines</p>
+            <p class="text-2xl font-bold mt-1">₦1,150</p>
+          </div>
+          <div class="bg-white rounded-xl border shadow-sm p-5 text-center">
+            <p class="text-sm text-muted-foreground">Unpaid</p>
+            <p class="text-2xl font-bold text-destructive mt-1">₦800</p>
+          </div>
+          <div class="bg-white rounded-xl border shadow-sm p-5 text-center">
+            <p class="text-sm text-muted-foreground">Collected</p>
+            <p class="text-2xl font-bold text-success mt-1">₦350</p>
+          </div>
+        </div>
+
+        <!-- Fines Table -->
+        <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+          <table>
+            <thead><tr><th>Member</th><th>Book</th><th>Days Late</th><th>Amount</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="font-medium">Grace Okafor</td><td class="text-muted-foreground">Mere Christianity</td><td>10</td><td class="font-semibold">₦500</td><td class="text-muted-foreground">2025-02-15</td>
+                <td><span class="text-xs px-2 py-1 rounded-full bg-destructive text-white font-medium inline-flex items-center gap-1">✕ Unpaid</span></td>
+                <td><button class="text-xs border rounded-lg px-3 py-1 hover:bg-muted">Mark Paid</button></td>
+              </tr>
+              <tr>
+                <td class="font-medium">Emmanuel Nwosu</td><td class="text-muted-foreground">Through Gates of Splendor</td><td>6</td><td class="font-semibold">₦300</td><td class="text-muted-foreground">2025-02-19</td>
+                <td><span class="text-xs px-2 py-1 rounded-full bg-destructive text-white font-medium inline-flex items-center gap-1">✕ Unpaid</span></td>
+                <td><button class="text-xs border rounded-lg px-3 py-1 hover:bg-muted">Mark Paid</button></td>
+              </tr>
+              <tr>
+                <td class="font-medium">Emmanuel Nwosu</td><td class="text-muted-foreground">Knowing God</td><td>7</td><td class="font-semibold">₦350</td><td class="text-muted-foreground">2025-01-29</td>
+                <td><span class="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-600 font-medium inline-flex items-center gap-1">✓ Paid</span></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td class="font-medium">David Mensah</td><td class="text-muted-foreground">Wild at Heart</td><td>0</td><td class="font-semibold">₦0</td><td class="text-muted-foreground">2025-02-03</td>
+                <td><span class="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-600 font-medium inline-flex items-center gap-1">✓ Paid</span></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

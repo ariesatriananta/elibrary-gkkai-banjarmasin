@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Books - Grace Chapel Library</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: 'hsl(158 30% 38%)', foreground: '#fff' },
+            accent: { DEFAULT: 'hsl(35 60% 55%)', foreground: '#fff' },
+            info: { DEFAULT: 'hsl(200 60% 50%)', foreground: '#fff' },
+            success: { DEFAULT: 'hsl(158 40% 42%)', foreground: '#fff' },
+            warning: { DEFAULT: 'hsl(35 85% 50%)', foreground: '#fff' },
+            destructive: { DEFAULT: 'hsl(0 65% 55%)', foreground: '#fff' },
+            muted: { DEFAULT: 'hsl(40 15% 94%)', foreground: 'hsl(220 10% 46%)' },
+            card: 'hsl(0 0% 100%)',
+            border: 'hsl(40 15% 89%)',
+            background: 'hsl(40 20% 97%)',
+            foreground: 'hsl(220 20% 15%)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: hsl(40 20% 97%); color: hsl(220 20% 15%); }
+    .sidebar-link { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: hsl(220 15% 30%); text-decoration: none; }
+    .sidebar-link:hover { background: hsl(158 20% 95%); }
+    .sidebar-link.active { background: hsl(158 20% 95%); color: hsl(158 30% 30%); font-weight: 500; }
+    .cat-badge { font-size: 0.75rem; padding: 0.125rem 0.5rem; border-radius: 9999px; border: 1px solid hsl(40 15% 89%); }
+  </style>
+</head>
+<body>
+  <div class="min-h-screen flex w-full">
+    <!-- Sidebar -->
+    <aside class="w-64 border-r bg-white flex-shrink-0">
+      <div class="p-4 flex items-center gap-2 border-b">
+        <div class="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
+          <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+        </div>
+        <div class="leading-tight"><p class="font-semibold text-sm">Church Library</p><p class="text-xs text-muted-foreground">Management System</p></div>
+      </div>
+      <nav class="p-3 space-y-1">
+        <p class="text-xs font-medium text-muted-foreground px-3 py-2">Navigation</p>
+        <a href="index.html" class="sidebar-link">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Dashboard</a>
+        <a href="books.html" class="sidebar-link active">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          Books</a>
+        <a href="members.html" class="sidebar-link">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          Members</a>
+        <a href="transactions.html" class="sidebar-link">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 3l4 4-4 4"/><path d="M16 21l-4-4 4-4"/></svg>
+          Transactions</a>
+        <a href="fines.html" class="sidebar-link">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          Fines</a>
+      </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col">
+      <header class="h-14 flex items-center border-b px-4 bg-white">
+        <span class="text-lg font-semibold tracking-tight">Grace Chapel Library</span>
+      </header>
+      <div class="flex-1 p-6 overflow-auto space-y-6">
+        <div class="flex items-center justify-between">
+          <div><h1 class="text-2xl font-bold tracking-tight">Books</h1><p class="text-muted-foreground">Manage your library collection</p></div>
+          <button class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:opacity-90">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Book
+          </button>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="flex gap-3">
+          <div class="relative flex-1">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Search by title or author..." class="w-full border rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+          </div>
+          <select class="border rounded-lg px-3 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-primary/30">
+            <option>All Categories</option>
+            <option>Bible Study</option><option>Devotional</option><option>Theology</option>
+            <option>Christian Living</option><option>Youth</option><option>Children</option>
+            <option>History</option><option>Missions</option><option>Leadership</option><option>Fiction</option>
+          </select>
+        </div>
+
+        <!-- Book Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+
+          <div class="bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div class="h-32 bg-gradient-to-br from-primary/80 to-primary/40 flex items-center justify-center">
+              <span class="text-white font-bold text-lg text-center px-4 leading-tight drop-shadow">Mere Christianity</span>
+            </div>
+            <div class="p-4 space-y-2">
+              <p class="text-xs text-muted-foreground">C.S. Lewis</p>
+              <div class="flex items-center justify-between">
+                <span class="cat-badge bg-primary/15 text-primary">Theology</span>
+                <span class="text-xs text-muted-foreground">2/3 avail</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div class="h-32 bg-gradient-to-br from-accent/80 to-accent/40 flex items-center justify-center">
+              <span class="text-white font-bold text-lg text-center px-4 leading-tight drop-shadow">The Purpose Driven Life</span>
+            </div>
+            <div class="p-4 space-y-2">
+              <p class="text-xs text-muted-foreground">Rick Warren</p>
+              <div class="flex items-center justify-between">
+                <span class="cat-badge bg-success/15 text-success">Christian Living</span>
+                <span class="text-xs text-muted-foreground">1/2 avail</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div class="h-32 bg-gradient-to-br from-info/80 to-info/40 flex items-center justify-center">
+              <span class="text-white font-bold text-lg text-center px-4 leading-tight drop-shadow">Jesus Calling</span>
+            </div>
+            <div class="p-4 space-y-2">
+              <p class="text-xs text-muted-foreground">Sarah Young</p>
+              <div class="flex items-center justify-between">
+                <span class="cat-badge bg-accent/15 text-accent">Devotional</span>
+                <span class="text-xs text-muted-foreground">0/1 avail</span>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-destructive text-white">All Borrowed</span>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div class="h-32 bg-gradient-to-br from-success/80 to-success/40 flex items-center justify-center">
+              <span class="text-white font-bold text-lg text-center px-4 leading-tight drop-shadow">Knowing God</span>
+            </div>
+            <div class="p-4 space-y-2">
+              <p class="text-xs text-muted-foreground">J.I. Packer</p>
+              <div class="flex items-center justify-between">
+                <span class="cat-badge bg-primary/15 text-primary">Theology</span>
+                <span class="text-xs text-muted-foreground">2/2 avail</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div class="h-32 bg-gradient-to-br from-warning/80 to-warning/40 flex items-center justify-center">
+              <span class="text-white font-bold text-lg text-center px-4 leading-tight drop-shadow">Wild at Heart</span>
+            </div>
+            <div class="p-4 space-y-2">
+              <p class="text-xs text-muted-foreground">John Eldredge</p>
+              <div class="flex items-center justify-between">
+                <span class="cat-badge bg-success/15 text-success">Christian Living</span>
+                <span class="text-xs text-muted-foreground">1/1 avail</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div class="h-32 bg-gradient-to-br from-destructive/60 to-destructive/30 flex items-center justify-center">
+              <span class="text-white font-bold text-lg text-center px-4 leading-tight drop-shadow">The Lion, the Witch and the Wardrobe</span>
+            </div>
+            <div class="p-4 space-y-2">
+              <p class="text-xs text-muted-foreground">C.S. Lewis</p>
+              <div class="flex items-center justify-between">
+                <span class="cat-badge bg-info/15 text-info">Fiction</span>
+                <span class="text-xs text-muted-foreground">3/4 avail</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div class="h-32 bg-gradient-to-br from-primary/80 to-primary/40 flex items-center justify-center">
+              <span class="text-white font-bold text-lg text-center px-4 leading-tight drop-shadow">Systematic Theology</span>
+            </div>
+            <div class="p-4 space-y-2">
+              <p class="text-xs text-muted-foreground">Wayne Grudem</p>
+              <div class="flex items-center justify-between">
+                <span class="cat-badge bg-primary/15 text-primary">Bible Study</span>
+                <span class="text-xs text-muted-foreground">1/2 avail</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div class="h-32 bg-gradient-to-br from-accent/80 to-accent/40 flex items-center justify-center">
+              <span class="text-white font-bold text-lg text-center px-4 leading-tight drop-shadow">Through Gates of Splendor</span>
+            </div>
+            <div class="p-4 space-y-2">
+              <p class="text-xs text-muted-foreground">Elisabeth Elliot</p>
+              <div class="flex items-center justify-between">
+                <span class="cat-badge bg-primary/15 text-primary">Missions</span>
+                <span class="text-xs text-muted-foreground">0/1 avail</span>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-destructive text-white">All Borrowed</span>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div class="h-32 bg-gradient-to-br from-info/80 to-info/40 flex items-center justify-center">
+              <span class="text-white font-bold text-lg text-center px-4 leading-tight drop-shadow">Courageous Leadership</span>
+            </div>
+            <div class="p-4 space-y-2">
+              <p class="text-xs text-muted-foreground">Bill Hybels</p>
+              <div class="flex items-center justify-between">
+                <span class="cat-badge bg-accent/15 text-accent">Leadership</span>
+                <span class="text-xs text-muted-foreground">2/2 avail</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div class="h-32 bg-gradient-to-br from-success/80 to-success/40 flex items-center justify-center">
+              <span class="text-white font-bold text-lg text-center px-4 leading-tight drop-shadow">The Jesus Storybook Bible</span>
+            </div>
+            <div class="p-4 space-y-2">
+              <p class="text-xs text-muted-foreground">Sally Lloyd-Jones</p>
+              <div class="flex items-center justify-between">
+                <span class="cat-badge bg-destructive/15 text-destructive">Children</span>
+                <span class="text-xs text-muted-foreground">2/3 avail</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div class="h-32 bg-gradient-to-br from-warning/80 to-warning/40 flex items-center justify-center">
+              <span class="text-white font-bold text-lg text-center px-4 leading-tight drop-shadow">Do Hard Things</span>
+            </div>
+            <div class="p-4 space-y-2">
+              <p class="text-xs text-muted-foreground">Alex & Brett Harris</p>
+              <div class="flex items-center justify-between">
+                <span class="cat-badge bg-warning/15 text-warning">Youth</span>
+                <span class="text-xs text-muted-foreground">1/2 avail</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div class="h-32 bg-gradient-to-br from-destructive/60 to-destructive/30 flex items-center justify-center">
+              <span class="text-white font-bold text-lg text-center px-4 leading-tight drop-shadow">Church History in Plain Language</span>
+            </div>
+            <div class="p-4 space-y-2">
+              <p class="text-xs text-muted-foreground">Bruce Shelley</p>
+              <div class="flex items-center justify-between">
+                <span class="cat-badge bg-gray-200 text-gray-500">History</span>
+                <span class="text-xs text-muted-foreground">1/1 avail</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transactions - Grace Chapel Library</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: 'hsl(158 30% 38%)', foreground: '#fff' },
+            accent: { DEFAULT: 'hsl(35 60% 55%)' },
+            info: { DEFAULT: 'hsl(200 60% 50%)' },
+            success: { DEFAULT: 'hsl(158 40% 42%)' },
+            destructive: { DEFAULT: 'hsl(0 65% 55%)' },
+            muted: { DEFAULT: 'hsl(40 15% 94%)', foreground: 'hsl(220 10% 46%)' },
+            border: 'hsl(40 15% 89%)',
+            background: 'hsl(40 20% 97%)',
+            foreground: 'hsl(220 20% 15%)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: hsl(40 20% 97%); color: hsl(220 20% 15%); }
+    .sidebar-link { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: hsl(220 15% 30%); text-decoration: none; }
+    .sidebar-link:hover { background: hsl(158 20% 95%); }
+    .sidebar-link.active { background: hsl(158 20% 95%); color: hsl(158 30% 30%); font-weight: 500; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 0.75rem; font-weight: 500; color: hsl(220 10% 46%); padding: 0.75rem 1rem; border-bottom: 1px solid hsl(40 15% 89%); }
+    td { padding: 0.75rem 1rem; border-bottom: 1px solid hsl(40 15% 89%); font-size: 0.875rem; }
+    .tab { padding: 0.5rem 1rem; font-size: 0.875rem; border-radius: 0.5rem; cursor: pointer; border: none; background: none; color: hsl(220 10% 46%); }
+    .tab.active { background: hsl(158 20% 95%); color: hsl(158 30% 30%); font-weight: 500; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="min-h-screen flex w-full">
+    <aside class="w-64 border-r bg-white flex-shrink-0">
+      <div class="p-4 flex items-center gap-2 border-b">
+        <div class="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
+          <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+        </div>
+        <div class="leading-tight"><p class="font-semibold text-sm">Church Library</p><p class="text-xs text-muted-foreground">Management System</p></div>
+      </div>
+      <nav class="p-3 space-y-1">
+        <p class="text-xs font-medium text-muted-foreground px-3 py-2">Navigation</p>
+        <a href="index.html" class="sidebar-link"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+        <a href="books.html" class="sidebar-link"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Books</a>
+        <a href="members.html" class="sidebar-link"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/></svg>Members</a>
+        <a href="transactions.html" class="sidebar-link active"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 3l4 4-4 4"/><path d="M16 21l-4-4 4-4"/></svg>Transactions</a>
+        <a href="fines.html" class="sidebar-link"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Fines</a>
+      </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col">
+      <header class="h-14 flex items-center border-b px-4 bg-white"><span class="text-lg font-semibold tracking-tight">Grace Chapel Library</span></header>
+      <div class="flex-1 p-6 overflow-auto space-y-6">
+        <div><h1 class="text-2xl font-bold tracking-tight">Transactions</h1><p class="text-muted-foreground">Borrow and return books</p></div>
+
+        <!-- Tabs -->
+        <div class="flex gap-1 bg-muted rounded-lg p-1 w-fit">
+          <button class="tab" onclick="showTab('borrow')">Borrow Book</button>
+          <button class="tab" onclick="showTab('return')">Return Book</button>
+          <button class="tab active" id="tab-history" onclick="showTab('history')">History</button>
+        </div>
+
+        <!-- Borrow Form -->
+        <div id="borrow" class="tab-content">
+          <div class="bg-white rounded-xl border shadow-sm p-6">
+            <h3 class="text-base font-semibold mb-4">Borrow a Book</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+              <div><label class="text-sm font-medium block mb-1">Member</label>
+                <select class="w-full border rounded-lg px-3 py-2 text-sm">
+                  <option>Select member</option><option>Grace Okafor</option><option>Samuel Adeyemi</option><option>Blessing Eze</option><option>David Mensah</option><option>Ruth Amadi</option><option>Emmanuel Nwosu</option><option>Esther Johnson</option><option>Peter Okwu</option>
+                </select>
+              </div>
+              <div><label class="text-sm font-medium block mb-1">Book</label>
+                <select class="w-full border rounded-lg px-3 py-2 text-sm">
+                  <option>Select book</option><option>Mere Christianity</option><option>The Purpose Driven Life</option><option>Knowing God</option><option>Wild at Heart</option><option>The Lion, the Witch and the Wardrobe</option><option>Systematic Theology</option><option>Courageous Leadership</option><option>The Jesus Storybook Bible</option><option>Do Hard Things</option><option>Church History in Plain Language</option>
+                </select>
+              </div>
+              <div><label class="text-sm font-medium block mb-1">Borrow Date</label><input type="date" value="2025-02-25" class="w-full border rounded-lg px-3 py-2 text-sm"></div>
+              <div><label class="text-sm font-medium block mb-1">Due Date</label><input type="date" value="2025-03-11" class="w-full border rounded-lg px-3 py-2 text-sm"></div>
+              <div class="md:col-span-2"><button class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium">Record Borrowing</button></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Return Form -->
+        <div id="return" class="tab-content">
+          <div class="bg-white rounded-xl border shadow-sm p-6">
+            <h3 class="text-base font-semibold mb-4">Return a Book</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+              <div><label class="text-sm font-medium block mb-1">Active Loan</label>
+                <select class="w-full border rounded-lg px-3 py-2 text-sm">
+                  <option>Select active loan</option>
+                  <option>Mere Christianity — Grace Okafor</option>
+                  <option>Jesus Calling — Samuel Adeyemi</option>
+                  <option>The Purpose Driven Life — Grace Okafor</option>
+                  <option>Through Gates of Splendor — Emmanuel Nwosu</option>
+                  <option>Systematic Theology — Emmanuel Nwosu</option>
+                  <option>Do Hard Things — Esther Johnson</option>
+                </select>
+              </div>
+              <div><label class="text-sm font-medium block mb-1">Return Date</label><input type="date" value="2025-02-25" class="w-full border rounded-lg px-3 py-2 text-sm"></div>
+              <div class="md:col-span-2"><button class="bg-gray-200 text-foreground px-4 py-2 rounded-lg text-sm font-medium">Record Return</button></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- History -->
+        <div id="history" class="tab-content active">
+          <div class="relative max-w-md mb-4">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Search transactions..." class="w-full border rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+          </div>
+          <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+            <table>
+              <thead><tr><th>Book</th><th>Member</th><th>Borrowed</th><th>Due</th><th>Returned</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td class="font-medium">Mere Christianity</td><td>Grace Okafor</td><td class="text-muted-foreground">2025-02-01</td><td class="text-muted-foreground">2025-02-15</td><td class="text-muted-foreground">—</td><td><span class="text-xs px-2 py-1 rounded-full bg-destructive text-white font-medium">overdue</span></td></tr>
+                <tr><td class="font-medium">Jesus Calling</td><td>Samuel Adeyemi</td><td class="text-muted-foreground">2025-02-10</td><td class="text-muted-foreground">2025-02-24</td><td class="text-muted-foreground">—</td><td><span class="text-xs px-2 py-1 rounded-full bg-primary text-white font-medium">borrowed</span></td></tr>
+                <tr><td class="font-medium">The Purpose Driven Life</td><td>Grace Okafor</td><td class="text-muted-foreground">2025-02-12</td><td class="text-muted-foreground">2025-02-26</td><td class="text-muted-foreground">—</td><td><span class="text-xs px-2 py-1 rounded-full bg-primary text-white font-medium">borrowed</span></td></tr>
+                <tr><td class="font-medium">Wild at Heart</td><td>David Mensah</td><td class="text-muted-foreground">2025-01-20</td><td class="text-muted-foreground">2025-02-03</td><td class="text-muted-foreground">2025-02-02</td><td><span class="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-600 font-medium">returned</span></td></tr>
+                <tr><td class="font-medium">Through Gates of Splendor</td><td>Emmanuel Nwosu</td><td class="text-muted-foreground">2025-02-05</td><td class="text-muted-foreground">2025-02-19</td><td class="text-muted-foreground">—</td><td><span class="text-xs px-2 py-1 rounded-full bg-destructive text-white font-medium">overdue</span></td></tr>
+                <tr><td class="font-medium">Systematic Theology</td><td>Emmanuel Nwosu</td><td class="text-muted-foreground">2025-02-14</td><td class="text-muted-foreground">2025-02-28</td><td class="text-muted-foreground">—</td><td><span class="text-xs px-2 py-1 rounded-full bg-primary text-white font-medium">borrowed</span></td></tr>
+                <tr><td class="font-medium">Do Hard Things</td><td>Esther Johnson</td><td class="text-muted-foreground">2025-02-08</td><td class="text-muted-foreground">2025-02-22</td><td class="text-muted-foreground">—</td><td><span class="text-xs px-2 py-1 rounded-full bg-primary text-white font-medium">borrowed</span></td></tr>
+                <tr><td class="font-medium">Knowing God</td><td>Emmanuel Nwosu</td><td class="text-muted-foreground">2025-01-15</td><td class="text-muted-foreground">2025-01-29</td><td class="text-muted-foreground">2025-02-05</td><td><span class="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-600 font-medium">returned</span></td></tr>
+                <tr><td class="font-medium">The Jesus Storybook Bible</td><td>Ruth Amadi</td><td class="text-muted-foreground">2025-01-10</td><td class="text-muted-foreground">2025-01-24</td><td class="text-muted-foreground">2025-01-23</td><td><span class="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-600 font-medium">returned</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function showTab(name) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      document.getElementById(name).classList.add('active');
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>
