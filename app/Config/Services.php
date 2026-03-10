@@ -3,6 +3,7 @@
 namespace Config;
 
 use App\Services\BookImportService;
+use App\Services\LibraryService;
 use CodeIgniter\Config\BaseService;
 
 /**
@@ -27,6 +28,15 @@ class Services extends BaseService
         }
 
         return new BookImportService();
+    }
+
+    public static function libraryService(bool $getShared = true): LibraryService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('libraryService');
+        }
+
+        return new LibraryService();
     }
 
     /*

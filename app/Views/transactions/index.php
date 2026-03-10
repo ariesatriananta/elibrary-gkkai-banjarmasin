@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 <div>
   <h1 class="text-2xl font-bold tracking-tight">Peminjaman & Pengembalian</h1>
-  <p class="text-slate-500">Catat peminjaman buku, pengembalian, dan histori transaksi.</p>
+  <p class="text-slate-500">Catat peminjaman, pengembalian, dan pantau histori transaksi.</p>
 </div>
 
 <div class="inline-flex w-fit gap-1 rounded-lg bg-muted p-1">
@@ -15,72 +15,108 @@
 <div class="transaction-panel hidden" data-panel="borrow">
   <div class="panel-card p-6">
     <h3 class="mb-4 text-base font-semibold">Form Peminjaman</h3>
-    <div class="grid max-w-2xl grid-cols-1 gap-4 md:grid-cols-2">
-      <div>
-        <label class="mb-1 block text-sm font-medium">Anggota</label>
-        <select class="panel-input">
-          <option>Pilih anggota</option>
-          <?php foreach ($members as $member): ?>
-            <option><?= esc($member) ?></option>
-          <?php endforeach; ?>
-        </select>
+    <?php if ($members === [] || $availableCopies === []): ?>
+      <div class="rounded-xl bg-muted p-4 text-sm text-slate-600">
+        <?= $members === [] ? 'Belum ada anggota aktif.' : 'Belum ada copy buku yang tersedia untuk dipinjam.' ?>
       </div>
-      <div>
-        <label class="mb-1 block text-sm font-medium">Buku</label>
-        <select class="panel-input">
-          <option>Pilih buku</option>
-          <?php foreach ($books as $book): ?>
-            <option><?= esc($book) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-      <div>
-        <label class="mb-1 block text-sm font-medium">Tanggal Pinjam</label>
-        <input type="date" value="2025-02-25" class="panel-input">
-      </div>
-      <div>
-        <label class="mb-1 block text-sm font-medium">Tanggal Jatuh Tempo</label>
-        <input type="date" value="2025-03-11" class="panel-input">
-      </div>
-      <div class="md:col-span-2">
-        <button class="panel-button" type="button">Simpan Peminjaman</button>
-      </div>
-    </div>
+    <?php else: ?>
+      <form method="post" action="<?= site_url('transactions/borrow') ?>" class="grid max-w-3xl grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <label class="mb-1 block text-sm font-medium">Anggota</label>
+          <select name="member_id" class="panel-input" required>
+            <option value="">Pilih anggota</option>
+            <?php foreach ($members as $member): ?>
+              <option value="<?= esc((string) $member['id']) ?>" <?= old('member_id') === (string) $member['id'] ? 'selected' : '' ?>>
+                <?= esc($member['member_number'] . ' - ' . $member['full_name']) ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium">Copy Buku</label>
+          <select name="book_copy_id" class="panel-input" required>
+            <option value="">Pilih copy buku</option>
+            <?php foreach ($availableCopies as $copy): ?>
+              <option value="<?= esc((string) $copy['id']) ?>" <?= old('book_copy_id') === (string) $copy['id'] ? 'selected' : '' ?>>
+                <?= esc($copy['title'] . ' - ' . $copy['copy_code']) ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium">Tanggal Pinjam</label>
+          <input type="date" name="borrowed_at" value="<?= esc(old('borrowed_at', $defaultBorrowDate)) ?>" class="panel-input" required>
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium">Tanggal Jatuh Tempo</label>
+          <input type="date" name="due_at" value="<?= esc(old('due_at', $defaultDueDate)) ?>" class="panel-input" required>
+        </div>
+        <div class="md:col-span-2">
+          <label class="mb-1 block text-sm font-medium">Catatan</label>
+          <textarea name="notes" rows="3" class="panel-input"><?= esc(old('notes', '')) ?></textarea>
+        </div>
+        <div class="md:col-span-2">
+          <button class="panel-button" type="submit">Simpan Peminjaman</button>
+        </div>
+      </form>
+    <?php endif; ?>
   </div>
 </div>
 
 <div class="transaction-panel hidden" data-panel="return">
   <div class="panel-card p-6">
     <h3 class="mb-4 text-base font-semibold">Form Pengembalian</h3>
-    <div class="grid max-w-2xl grid-cols-1 gap-4 md:grid-cols-2">
-      <div>
-        <label class="mb-1 block text-sm font-medium">Pinjaman Aktif</label>
-        <select class="panel-input">
-          <option>Pilih pinjaman aktif</option>
-          <?php foreach ($activeLoans as $loan): ?>
-            <option><?= esc($loan) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-      <div>
-        <label class="mb-1 block text-sm font-medium">Tanggal Kembali</label>
-        <input type="date" value="2025-02-25" class="panel-input">
-      </div>
-      <div class="md:col-span-2">
-        <button class="panel-button-secondary" type="button">Simpan Pengembalian</button>
-      </div>
-    </div>
+    <?php if ($activeLoans === []): ?>
+      <div class="rounded-xl bg-muted p-4 text-sm text-slate-600">Belum ada pinjaman aktif.</div>
+    <?php else: ?>
+      <form method="post" action="<?= site_url('transactions/return') ?>" class="grid max-w-3xl grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <label class="mb-1 block text-sm font-medium">Pinjaman Aktif</label>
+          <select name="loan_id" class="panel-input" required>
+            <option value="">Pilih pinjaman aktif</option>
+            <?php foreach ($activeLoans as $loan): ?>
+              <option value="<?= esc((string) $loan['id']) ?>" <?= old('loan_id') === (string) $loan['id'] ? 'selected' : '' ?>>
+                <?= esc($loan['book_title'] . ' - ' . $loan['copy_code'] . ' - ' . $loan['member_name']) ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium">Tanggal Kembali</label>
+          <input type="date" name="returned_at" value="<?= esc(old('returned_at', date('Y-m-d'))) ?>" class="panel-input" required>
+        </div>
+        <div class="md:col-span-2">
+          <label class="mb-1 block text-sm font-medium">Catatan</label>
+          <textarea name="notes" rows="3" class="panel-input"><?= esc(old('notes', '')) ?></textarea>
+        </div>
+        <div class="md:col-span-2">
+          <button class="panel-button-secondary" type="submit">Simpan Pengembalian</button>
+        </div>
+      </form>
+    <?php endif; ?>
   </div>
 </div>
 
 <div class="transaction-panel" data-panel="history">
-  <div class="relative mb-4 max-w-md">
-    <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <circle cx="11" cy="11" r="8"></circle>
-      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-    </svg>
-    <input type="text" placeholder="Cari transaksi..." class="panel-input pl-9">
-  </div>
+  <form method="get" action="<?= site_url('transactions') ?>" class="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-[1.3fr_0.7fr_auto]">
+    <div class="relative">
+      <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" name="q" value="<?= esc($filters['q']) ?>" placeholder="Cari buku, copy, anggota..." class="panel-input pl-9">
+    </div>
+    <select name="status" class="panel-input">
+      <option value="">Semua Status</option>
+      <option value="borrowed" <?= $filters['status'] === 'borrowed' ? 'selected' : '' ?>>Dipinjam</option>
+      <option value="overdue" <?= $filters['status'] === 'overdue' ? 'selected' : '' ?>>Terlambat</option>
+      <option value="returned" <?= $filters['status'] === 'returned' ? 'selected' : '' ?>>Dikembalikan</option>
+    </select>
+    <div class="flex gap-2">
+      <button type="submit" class="panel-button justify-center">Filter</button>
+      <a href="<?= site_url('transactions') ?>" class="panel-button-secondary justify-center">Reset</a>
+    </div>
+  </form>
 
   <div class="panel-card overflow-hidden">
     <div class="overflow-x-auto">
@@ -93,23 +129,39 @@
             <th class="border-b border-border px-4 py-3">Jatuh Tempo</th>
             <th class="border-b border-border px-4 py-3">Kembali</th>
             <th class="border-b border-border px-4 py-3">Status</th>
+            <th class="border-b border-border px-4 py-3">Denda</th>
           </tr>
         </thead>
         <tbody>
-          <?php foreach ($history as $row): ?>
-            <tr class="text-sm">
-              <td class="border-b border-border px-4 py-3 font-medium"><?= esc($row['book']) ?></td>
-              <td class="border-b border-border px-4 py-3"><?= esc($row['member']) ?></td>
-              <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($row['borrowed']) ?></td>
-              <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($row['due']) ?></td>
-              <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($row['returned']) ?></td>
-              <td class="border-b border-border px-4 py-3">
-                <span class="status-badge status-badge-<?= esc($row['status']) ?>">
-                  <?= esc($row['status']) ?>
-                </span>
-              </td>
+          <?php if ($history === []): ?>
+            <tr>
+              <td colspan="7" class="border-b border-border px-4 py-6 text-center text-sm text-slate-500">Belum ada transaksi.</td>
             </tr>
-          <?php endforeach; ?>
+          <?php else: ?>
+            <?php foreach ($history as $row): ?>
+              <tr class="text-sm">
+                <td class="border-b border-border px-4 py-3">
+                  <p class="font-medium"><?= esc($row['book_title']) ?></p>
+                  <p class="text-xs text-slate-500"><?= esc($row['copy_code']) ?></p>
+                </td>
+                <td class="border-b border-border px-4 py-3">
+                  <p><?= esc($row['member_name']) ?></p>
+                  <p class="text-xs text-slate-500"><?= esc($row['member_number']) ?></p>
+                </td>
+                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(substr((string) $row['borrowed_at'], 0, 10)) ?></td>
+                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(substr((string) $row['due_at'], 0, 10)) ?></td>
+                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($row['returned_at'] ? substr((string) $row['returned_at'], 0, 10) : '-') ?></td>
+                <td class="border-b border-border px-4 py-3">
+                  <span class="status-badge status-badge-<?= esc($row['status']) ?>">
+                    <?= esc($row['status']) ?>
+                  </span>
+                </td>
+                <td class="border-b border-border px-4 py-3 text-slate-500">
+                  <?= isset($row['fine_amount']) && $row['fine_amount'] !== null ? esc(rupiah($row['fine_amount'])) : '-' ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
         </tbody>
       </table>
     </div>

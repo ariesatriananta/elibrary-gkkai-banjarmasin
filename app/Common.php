@@ -13,3 +13,32 @@
  *
  * @see: https://codeigniter.com/user_guide/extending/common.html
  */
+
+if (! function_exists('rupiah')) {
+    function rupiah(float|int|string|null $amount): string
+    {
+        $value = (float) ($amount ?? 0);
+
+        return 'Rp ' . number_format($value, 0, ',', '.');
+    }
+}
+
+if (! function_exists('person_initials')) {
+    function person_initials(?string $name): string
+    {
+        $name = trim((string) $name);
+
+        if ($name === '') {
+            return '--';
+        }
+
+        $parts = preg_split('/\s+/', $name) ?: [];
+        $initials = '';
+
+        foreach (array_slice($parts, 0, 2) as $part) {
+            $initials .= mb_strtoupper(mb_substr($part, 0, 1));
+        }
+
+        return $initials !== '' ? $initials : '--';
+    }
+}

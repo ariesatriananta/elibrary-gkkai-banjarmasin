@@ -2,33 +2,69 @@
 
 namespace App\Controllers;
 
+use App\Models\BookModel;
+use App\Models\FineModel;
+use App\Models\LoanModel;
+use App\Models\MemberModel;
+
 class DashboardController extends BaseController
 {
     public function index(): string
     {
+        service('libraryService')->syncStatuses();
+
+        $bookModel = new BookModel();
+        $memberModel = new MemberModel();
+        $loanModel = new LoanModel();
+        $fineModel = new FineModel();
+
+        $recentTransactions = db_connect()->query("
+            SELECT
+                l.status,
+                l.borrowed_at,
+                b.title AS book_title,
+                m.full_name AS member_name
+            FROM loans l
+            INNER JOIN book_copies bc ON bc.id = l.book_copy_id
+            INNER JOIN books b ON b.id = bc.book_id
+            INNER JOIN members m ON m.id = l.member_id
+            ORDER BY l.created_at DESC, l.id DESC
+            LIMIT 5
+        ")->getResultArray();
+
+        $lateSummaries = db_connect()->query("
+            SELECT
+                m.full_name AS member_name,
+                b.title AS book_title,
+                f.late_days,
+                f.amount
+            FROM fines f
+            INNER JOIN loans l ON l.id = f.loan_id
+            INNER JOIN members m ON m.id = l.member_id
+            INNER JOIN book_copies bc ON bc.id = l.book_copy_id
+            INNER JOIN books b ON b.id = bc.book_id
+            WHERE f.status IN ('unpaid', 'partial')
+            ORDER BY f.amount DESC, f.id DESC
+            LIMIT 5
+        ")->getResultArray();
+
+        $totalFine = (float) $fineModel->selectSum('amount')->first()['amount'];
+        $paidFine = (float) $fineModel->selectSum('paid_amount')->first()['paid_amount'];
+
         return view('dashboard/index', [
             'pageTitle' => 'Dashboard',
             'activeMenu' => 'dashboard',
             'stats' => [
-                ['label' => 'Total Buku', 'value' => '22'],
-                ['label' => 'Total Anggota', 'value' => '8'],
-                ['label' => 'Sedang Dipinjam', 'value' => '4'],
-                ['label' => 'Terlambat', 'value' => '2'],
+                ['label' => 'Total Buku', 'value' => (string) $bookModel->countAllResults()],
+                ['label' => 'Total Anggota', 'value' => (string) $memberModel->countAllResults()],
+                ['label' => 'Sedang Dipinjam', 'value' => (string) $loanModel->whereIn('status', ['borrowed', 'overdue'])->countAllResults()],
+                ['label' => 'Terlambat', 'value' => (string) $loanModel->where('status', 'overdue')->countAllResults()],
             ],
-            'recentTransactions' => [
-                ['book' => 'Mere Christianity', 'member' => 'Grace Okafor', 'date' => '2025-02-01', 'status' => 'overdue'],
-                ['book' => 'Jesus Calling', 'member' => 'Samuel Adeyemi', 'date' => '2025-02-10', 'status' => 'borrowed'],
-                ['book' => 'The Purpose Driven Life', 'member' => 'Grace Okafor', 'date' => '2025-02-12', 'status' => 'borrowed'],
-                ['book' => 'Wild at Heart', 'member' => 'David Mensah', 'date' => '2025-01-20', 'status' => 'returned'],
-                ['book' => 'Through Gates of Splendor', 'member' => 'Emmanuel Nwosu', 'date' => '2025-02-05', 'status' => 'overdue'],
-            ],
-            'lateSummaries' => [
-                ['member' => 'Grace Okafor', 'book' => 'Mere Christianity', 'days_late' => 10, 'amount' => 'Rp 15.000'],
-                ['member' => 'Emmanuel Nwosu', 'book' => 'Through Gates of Splendor', 'days_late' => 6, 'amount' => 'Rp 9.000'],
-            ],
+            'recentTransactions' => $recentTransactions,
+            'lateSummaries' => $lateSummaries,
             'fineSummary' => [
-                'unpaid' => 'Rp 24.000',
-                'collected' => 'Rp 10.500',
+                'unpaid' => max(0, $totalFine - $paidFine),
+                'collected' => $paidFine,
             ],
         ]);
     }
