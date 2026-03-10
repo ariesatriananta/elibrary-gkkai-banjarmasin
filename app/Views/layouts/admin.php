@@ -14,7 +14,14 @@
   <?= $this->include('partials/theme_head') ?>
   <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
 </head>
+<?php $pageSkeleton = trim($this->renderSection('pageSkeleton')); ?>
 <body class="app-shell">
+  <div class="app-progress" aria-hidden="true">
+    <div class="app-progress-track">
+      <div class="app-progress-bar"></div>
+    </div>
+  </div>
+
   <div class="pointer-events-none fixed inset-0 overflow-hidden">
     <div class="page-orb page-orb-primary left-[-10rem] top-[-8rem] h-72 w-72"></div>
     <div class="page-orb page-orb-accent right-[-6rem] top-16 h-64 w-64"></div>
@@ -63,29 +70,45 @@
         </div>
       </header>
 
-      <div class="space-y-6 px-1 pb-6">
-        <?php if (session()->getFlashdata('success')): ?>
-          <div class="glass-alert border-success/20 bg-success/10 text-success">
-            <?= esc(session()->getFlashdata('success')) ?>
+      <div id="page-content-shell" class="page-content-shell px-1 pb-6">
+        <div id="page-loading-skeleton" class="page-loading-skeleton" aria-hidden="true">
+          <div id="page-loading-skeleton-content">
+            <?php if ($pageSkeleton !== ''): ?>
+              <?= $pageSkeleton ?>
+            <?php else: ?>
+              <?= $this->include('partials/page_skeleton_default') ?>
+            <?php endif; ?>
           </div>
-        <?php endif; ?>
+        </div>
 
-        <?php if (session()->getFlashdata('error')): ?>
-          <div class="glass-alert border-destructive/20 bg-destructive/10 text-destructive">
-            <?= esc(session()->getFlashdata('error')) ?>
-          </div>
-        <?php endif; ?>
+        <div class="page-live-content space-y-6">
+          <?php if (session()->getFlashdata('success')): ?>
+            <div class="glass-alert border-success/20 bg-success/10 text-success">
+              <?= esc(session()->getFlashdata('success')) ?>
+            </div>
+          <?php endif; ?>
 
-        <?= $this->renderSection('content') ?>
+          <?php if (session()->getFlashdata('error')): ?>
+            <div class="glass-alert border-destructive/20 bg-destructive/10 text-destructive">
+              <?= esc(session()->getFlashdata('error')) ?>
+            </div>
+          <?php endif; ?>
+
+          <?= $this->renderSection('content') ?>
+        </div>
       </div>
     </main>
   </div>
+
+  <?= $this->include('partials/page_skeleton_templates') ?>
 
   <script>
     (() => {
       const root = document.documentElement;
       const button = document.getElementById('theme-toggle');
       const themeColorMeta = document.getElementById('theme-color-meta');
+      const body = document.body;
+      const skeletonContent = document.getElementById('page-loading-skeleton-content');
       const colors = {
         light: '#4c7a5e',
         dark: '#0f172a',
@@ -114,6 +137,139 @@
           // Ignore storage errors and keep the theme in memory.
         }
       });
+
+      const startPageLoading = () => {
+        body.classList.add('is-page-loading');
+      };
+
+      const stopPageLoading = () => {
+        body.classList.remove('is-page-loading');
+        document.querySelectorAll('.is-loading-submit').forEach((element) => {
+          element.classList.remove('is-loading-submit');
+          element.disabled = false;
+          element.removeAttribute('aria-busy');
+        });
+        document.querySelectorAll('.is-loading-nav').forEach((element) => {
+          element.classList.remove('is-loading-nav');
+          element.removeAttribute('aria-busy');
+        });
+      };
+
+      const setSkeletonTemplate = (name) => {
+        if (!skeletonContent) {
+          return;
+        }
+
+        const template = document.getElementById(`skeleton-template-${name}`);
+
+        if (!template) {
+          return;
+        }
+
+        skeletonContent.innerHTML = template.innerHTML;
+      };
+
+      const detectSkeletonTemplate = (href) => {
+        try {
+          const url = new URL(href, window.location.origin);
+          const path = url.pathname.toLowerCase();
+
+          if (path.endsWith('/transactions') || path.includes('/transactions/')) {
+            return 'transactions';
+          }
+
+          if (path.endsWith('/fines') || path.includes('/fines/')) {
+            return 'fines';
+          }
+
+          if (path.endsWith('/members') || path.includes('/members/')) {
+            return 'members';
+          }
+
+          if (path.endsWith('/books') || path.includes('/books/')) {
+            return 'books';
+          }
+
+          return 'dashboard';
+        } catch (error) {
+          return 'default';
+        }
+      };
+
+      const shouldHandleNavigation = (event, link) => {
+        if (
+          event.defaultPrevented ||
+          event.button !== 0 ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey ||
+          link.target === '_blank'
+        ) {
+          return false;
+        }
+
+        const destination = link.getAttribute('href');
+
+        if (!destination || destination.startsWith('#')) {
+          return false;
+        }
+
+        return true;
+      };
+
+      document.querySelectorAll('.sidebar-link[href]').forEach((link) => {
+        link.addEventListener('click', (event) => {
+          if (!shouldHandleNavigation(event, link)) {
+            return;
+          }
+
+          setSkeletonTemplate(link.dataset.skeletonTemplate || 'default');
+          link.classList.add('is-loading-nav');
+          link.setAttribute('aria-busy', 'true');
+          startPageLoading();
+        });
+      });
+
+      document.querySelectorAll('main .page-live-content a[href].panel-button, main .page-live-content a[href].panel-button-secondary').forEach((link) => {
+        link.classList.add('loading-target');
+
+        link.addEventListener('click', (event) => {
+          if (!shouldHandleNavigation(event, link)) {
+            return;
+          }
+
+          setSkeletonTemplate(link.dataset.skeletonTemplate || detectSkeletonTemplate(link.href));
+          link.classList.add('is-loading-submit');
+          link.setAttribute('aria-busy', 'true');
+          startPageLoading();
+        });
+      });
+
+      document.querySelectorAll('form').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+          if (event.defaultPrevented) {
+            return;
+          }
+
+          const submitter = event.submitter instanceof HTMLElement
+            ? event.submitter
+            : form.querySelector('button[type="submit"], input[type="submit"]');
+
+          if (submitter instanceof HTMLElement) {
+            submitter.classList.add('loading-target', 'is-loading-submit');
+            submitter.setAttribute('aria-busy', 'true');
+
+            if ('disabled' in submitter) {
+              submitter.disabled = true;
+            }
+          }
+
+          startPageLoading();
+        });
+      });
+
+      window.addEventListener('pageshow', stopPageLoading);
     })();
   </script>
   <?= $this->renderSection('scripts') ?>

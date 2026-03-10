@@ -147,3 +147,7 @@ $fineContext = $fineContext ?? [];
   <?php endif; ?>
 </div>
 <?= $this->endSection() ?>
+
+<?= $this->section('pageSkeleton') ?>
+<?= $this->include('partials/skeletons/fines') ?>
+<?= $this->endSection() ?>

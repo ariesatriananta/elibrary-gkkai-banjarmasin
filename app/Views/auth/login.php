@@ -84,5 +84,38 @@
       </div>
     </div>
   </div>
+
+  <script>
+    (() => {
+      document.querySelectorAll('form').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+          if (event.defaultPrevented) {
+            return;
+          }
+
+          const submitter = event.submitter instanceof HTMLElement
+            ? event.submitter
+            : form.querySelector('button[type="submit"], input[type="submit"]');
+
+          if (submitter instanceof HTMLElement) {
+            submitter.classList.add('loading-target', 'is-loading-submit');
+            submitter.setAttribute('aria-busy', 'true');
+
+            if ('disabled' in submitter) {
+              submitter.disabled = true;
+            }
+          }
+        });
+      });
+
+      window.addEventListener('pageshow', () => {
+        document.querySelectorAll('.is-loading-submit').forEach((element) => {
+          element.classList.remove('is-loading-submit');
+          element.disabled = false;
+          element.removeAttribute('aria-busy');
+        });
+      });
+    })();
+  </script>
 </body>
 </html>

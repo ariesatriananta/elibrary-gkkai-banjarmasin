@@ -197,6 +197,10 @@ $activeTab = $activeTab ?? 'history';
 </div>
 <?= $this->endSection() ?>
 
+<?= $this->section('pageSkeleton') ?>
+<?= $this->include('partials/skeletons/transactions') ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('scripts') ?>
 <script>
   const tabs = document.querySelectorAll('.transaction-tab');

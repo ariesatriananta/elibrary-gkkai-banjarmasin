@@ -74,3 +74,7 @@
   </div>
 </div>
 <?= $this->endSection() ?>
+
+<?= $this->section('pageSkeleton') ?>
+<?= $this->include('partials/skeletons/dashboard') ?>
+<?= $this->endSection() ?>

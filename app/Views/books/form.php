@@ -356,3 +356,7 @@ $copyForm = session()->getFlashdata('copy_form') ?? [];
   </div>
 <?php endif; ?>
 <?= $this->endSection() ?>
+
+<?= $this->section('pageSkeleton') ?>
+<?= $this->include('partials/skeletons/books') ?>
+<?= $this->endSection() ?>

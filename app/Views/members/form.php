@@ -185,3 +185,7 @@ $errors = $errors ?? [];
   </div>
 <?php endif; ?>
 <?= $this->endSection() ?>
+
+<?= $this->section('pageSkeleton') ?>
+<?= $this->include('partials/skeletons/members') ?>
+<?= $this->endSection() ?>
