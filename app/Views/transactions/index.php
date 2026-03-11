@@ -5,9 +5,11 @@
 $errors = $errors ?? [];
 $activeTab = $activeTab ?? 'history';
 ?>
-<div>
-  <h1 class="text-2xl font-bold tracking-tight">Peminjaman & Pengembalian</h1>
-  <p class="text-slate-500">Catat peminjaman, pengembalian, dan pantau histori transaksi.</p>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Peminjaman & Pengembalian</h1>
+    <p class="page-description">Catat peminjaman, pengembalian, dan pantau histori transaksi.</p>
+  </div>
 </div>
 
 <div class="inline-flex w-fit gap-1 rounded-lg bg-muted p-1">
@@ -18,9 +20,9 @@ $activeTab = $activeTab ?? 'history';
 
 <div class="transaction-panel <?= $activeTab === 'borrow' ? '' : 'hidden' ?>" data-panel="borrow">
   <div class="panel-card p-6">
-    <h3 class="mb-4 text-base font-semibold">Form Peminjaman</h3>
+    <h3 class="section-heading mb-4 text-base">Form Peminjaman</h3>
     <?php if ($members === [] || $availableCopies === []): ?>
-      <div class="rounded-xl bg-muted p-4 text-sm text-slate-600">
+      <div class="soft-info">
         <?= $members === [] ? 'Belum ada anggota aktif.' : 'Belum ada copy buku yang tersedia untuk dipinjam.' ?>
       </div>
     <?php else: ?>
@@ -84,9 +86,9 @@ $activeTab = $activeTab ?? 'history';
 
 <div class="transaction-panel <?= $activeTab === 'return' ? '' : 'hidden' ?>" data-panel="return">
   <div class="panel-card p-6">
-    <h3 class="mb-4 text-base font-semibold">Form Pengembalian</h3>
+    <h3 class="section-heading mb-4 text-base">Form Pengembalian</h3>
     <?php if ($activeLoans === []): ?>
-      <div class="rounded-xl bg-muted p-4 text-sm text-slate-600">Belum ada pinjaman aktif.</div>
+      <div class="soft-info">Belum ada pinjaman aktif.</div>
     <?php else: ?>
       <form method="post" action="<?= site_url('transactions/return') ?>" class="grid max-w-3xl grid-cols-1 gap-4 md:grid-cols-2">
         <div>
@@ -126,7 +128,7 @@ $activeTab = $activeTab ?? 'history';
 </div>
 
 <div class="transaction-panel <?= $activeTab === 'history' ? '' : 'hidden' ?>" data-panel="history">
-  <form method="get" action="<?= site_url('transactions') ?>" class="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-[1.3fr_0.7fr_auto]">
+  <form method="get" action="<?= site_url('transactions') ?>" class="content-toolbar mb-4 grid grid-cols-1 gap-3 lg:grid-cols-[1.3fr_0.7fr_auto]">
     <div class="relative">
       <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <circle cx="11" cy="11" r="8"></circle>
@@ -146,45 +148,45 @@ $activeTab = $activeTab ?? 'history';
     </div>
   </form>
 
-  <div class="panel-card overflow-hidden">
+  <div class="data-table-wrapper">
     <div class="overflow-x-auto">
-      <table class="w-full border-collapse">
+      <table class="data-table">
         <thead>
-          <tr class="text-left text-xs font-medium text-slate-500">
-            <th class="border-b border-border px-4 py-3">Buku</th>
-            <th class="border-b border-border px-4 py-3">Anggota</th>
-            <th class="border-b border-border px-4 py-3">Pinjam</th>
-            <th class="border-b border-border px-4 py-3">Jatuh Tempo</th>
-            <th class="border-b border-border px-4 py-3">Kembali</th>
-            <th class="border-b border-border px-4 py-3">Status</th>
-            <th class="border-b border-border px-4 py-3">Denda</th>
+          <tr>
+            <th>Buku</th>
+            <th>Anggota</th>
+            <th>Pinjam</th>
+            <th>Jatuh Tempo</th>
+            <th>Kembali</th>
+            <th>Status</th>
+            <th>Denda</th>
           </tr>
         </thead>
         <tbody>
           <?php if ($history === []): ?>
             <tr>
-              <td colspan="7" class="border-b border-border px-4 py-6 text-center text-sm text-slate-500">Belum ada transaksi.</td>
+              <td colspan="7" class="py-10 text-center text-sm text-slate-500">Belum ada transaksi.</td>
             </tr>
           <?php else: ?>
             <?php foreach ($history as $row): ?>
-              <tr class="text-sm">
-                <td class="border-b border-border px-4 py-3">
+              <tr>
+                <td>
                   <p class="font-medium"><?= esc($row['book_title']) ?></p>
                   <p class="text-xs text-slate-500"><?= esc($row['copy_code']) ?></p>
                 </td>
-                <td class="border-b border-border px-4 py-3">
+                <td>
                   <p><?= esc($row['member_name']) ?></p>
                   <p class="text-xs text-slate-500"><?= esc($row['member_number']) ?></p>
                 </td>
-                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(format_indo_date($row['borrowed_at'])) ?></td>
-                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(format_indo_date($row['due_at'])) ?></td>
-                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($row['returned_at'] ? format_indo_date($row['returned_at']) : '-') ?></td>
-                <td class="border-b border-border px-4 py-3">
+                <td class="text-slate-500"><?= esc(format_indo_date($row['borrowed_at'])) ?></td>
+                <td class="text-slate-500"><?= esc(format_indo_date($row['due_at'])) ?></td>
+                <td class="text-slate-500"><?= esc($row['returned_at'] ? format_indo_date($row['returned_at']) : '-') ?></td>
+                <td>
                   <span class="status-badge status-badge-<?= esc($row['status']) ?>">
                     <?= esc(loan_status_label($row['status'])) ?>
                   </span>
                 </td>
-                <td class="border-b border-border px-4 py-3 text-slate-500">
+                <td class="text-slate-500">
                   <?= isset($row['fine_amount']) && $row['fine_amount'] !== null ? esc(rupiah($row['fine_amount'])) : '-' ?>
                 </td>
               </tr>

@@ -9,10 +9,10 @@ $errors = $errors ?? [];
 $copyForm = session()->getFlashdata('copy_form') ?? [];
 ?>
 
-<div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+<div class="page-header">
   <div>
-    <h1 class="text-2xl font-bold tracking-tight"><?= $isEdit ? 'Edit Buku' : 'Tambah Buku' ?></h1>
-    <p class="text-slate-500">
+    <h1 class="page-title"><?= $isEdit ? 'Edit Buku' : 'Tambah Buku' ?></h1>
+    <p class="page-description">
       <?= $isEdit ? 'Perbarui metadata buku dan kelola copy fisiknya.' : 'Tambahkan judul baru beserta jumlah copy awal.' ?>
     </p>
   </div>
@@ -196,7 +196,7 @@ $copyForm = session()->getFlashdata('copy_form') ?? [];
     <?php if ($isEdit): ?>
       <div class="panel-card p-6">
         <h2 class="mb-4 text-lg font-semibold">Ringkasan Buku</h2>
-        <div class="space-y-3 text-sm">
+      <div class="space-y-3 text-sm">
           <div class="flex items-center justify-between">
             <span class="text-slate-500">ID Buku</span>
             <span class="font-medium">#<?= esc((string) $bookId) ?></span>
@@ -225,7 +225,7 @@ $copyForm = session()->getFlashdata('copy_form') ?? [];
       </form>
     <?php else: ?>
       <div class="panel-card p-6">
-        <h2 class="mb-3 text-lg font-semibold">Catatan</h2>
+        <h2 class="section-heading mb-3">Catatan</h2>
         <p class="text-sm leading-6 text-slate-500">
           Setelah buku dibuat, sistem akan membuat kode copy otomatis seperti <span class="font-medium text-foreground">BK-000123-01</span>.
           Barcode manual dan kode buku lama bisa diatur setelah buku tersimpan.
@@ -238,35 +238,35 @@ $copyForm = session()->getFlashdata('copy_form') ?? [];
 <?php if ($isEdit): ?>
   <div class="panel-card p-6">
     <div class="mb-4">
-      <h2 class="text-lg font-semibold">Copy Buku</h2>
-      <p class="text-sm text-slate-500">Kode sistem dibuat otomatis. Barcode manual dan kode lama bisa diubah per copy.</p>
+      <h2 class="section-heading">Copy Buku</h2>
+      <p class="section-description">Kode sistem dibuat otomatis. Barcode manual dan kode lama bisa diubah per copy.</p>
     </div>
 
-    <div class="mb-6 overflow-x-auto">
-      <table class="w-full border-collapse">
+    <div class="data-table-wrapper mb-6 overflow-x-auto">
+      <table class="data-table">
         <thead>
-          <tr class="text-left text-xs font-medium text-slate-500">
-            <th class="border-b border-border px-3 py-3">Kode Sistem</th>
-            <th class="border-b border-border px-3 py-3">Kode Lama</th>
-            <th class="border-b border-border px-3 py-3">Barcode Manual</th>
-            <th class="border-b border-border px-3 py-3">Status</th>
-            <th class="border-b border-border px-3 py-3">Catatan</th>
-            <th class="border-b border-border px-3 py-3">Aksi</th>
+          <tr>
+            <th class="px-3 py-3">Kode Sistem</th>
+            <th class="px-3 py-3">Kode Lama</th>
+            <th class="px-3 py-3">Barcode Manual</th>
+            <th class="px-3 py-3">Status</th>
+            <th class="px-3 py-3">Catatan</th>
+            <th class="px-3 py-3">Aksi</th>
           </tr>
         </thead>
         <tbody>
           <?php if ($copies === []): ?>
             <tr>
-              <td colspan="6" class="border-b border-border px-3 py-6 text-center text-sm text-slate-500">
+              <td colspan="6" class="px-3 py-8 text-center text-sm text-slate-500">
                 Belum ada copy buku untuk judul ini.
               </td>
             </tr>
           <?php else: ?>
             <?php foreach ($copies as $copy): ?>
               <?php $isCopyEditError = ($copyForm['mode'] ?? null) === 'edit' && (int) ($copyForm['copy_id'] ?? 0) === (int) $copy['id']; ?>
-              <tr class="align-top text-sm">
-                <td class="border-b border-border px-3 py-3 font-medium"><?= esc($copy['copy_code']) ?></td>
-                <td class="border-b border-border px-3 py-3" colspan="4">
+              <tr class="align-top">
+                <td class="px-3 py-3 text-sm font-medium"><?= esc($copy['copy_code']) ?></td>
+                <td class="px-3 py-3" colspan="4">
                   <form method="post" action="<?= site_url('books/' . $bookId . '/copies/' . $copy['id']) ?>" class="grid grid-cols-1 gap-3 lg:grid-cols-[0.9fr_1fr_0.8fr_1.2fr_auto]">
                     <div>
                       <input type="text" name="legacy_code" value="<?= esc($isCopyEditError ? old('legacy_code', $copy['legacy_code'] ?? '') : ($copy['legacy_code'] ?? '')) ?>" class="panel-input <?= $isCopyEditError ? field_error_class($errors, 'legacy_code') : '' ?>" placeholder="Kode lama">
@@ -302,7 +302,7 @@ $copyForm = session()->getFlashdata('copy_form') ?? [];
                     <button type="submit" class="panel-button-secondary justify-center">Simpan</button>
                   </form>
                 </td>
-                <td class="border-b border-border px-3 py-3">
+                <td class="px-3 py-3">
                   <form method="post" action="<?= site_url('books/' . $bookId . '/copies/' . $copy['id'] . '/delete') ?>" onsubmit="return confirm('Hapus copy buku ini?');">
                     <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-white hover:opacity-90">
                       Hapus
@@ -316,9 +316,9 @@ $copyForm = session()->getFlashdata('copy_form') ?? [];
       </table>
     </div>
 
-    <div class="rounded-2xl border border-dashed border-border p-4">
-      <h3 class="text-base font-semibold">Tambah Copy Baru</h3>
-      <p class="mb-4 mt-1 text-sm text-slate-500">Sistem akan membuat kode copy baru otomatis.</p>
+    <div class="metric-tile border-dashed">
+      <h3 class="section-heading text-base">Tambah Copy Baru</h3>
+      <p class="section-description mb-4">Sistem akan membuat kode copy baru otomatis.</p>
 
       <?php $isCopyCreateError = ($copyForm['mode'] ?? null) === 'create'; ?>
       <form method="post" action="<?= site_url('books/' . $bookId . '/copies') ?>" class="grid grid-cols-1 gap-3 lg:grid-cols-[0.8fr_1fr_0.8fr_1.2fr_auto]">

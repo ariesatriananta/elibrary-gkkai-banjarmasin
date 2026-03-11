@@ -1,16 +1,18 @@
 <?= $this->extend('layouts/admin') ?>
 
 <?= $this->section('content') ?>
-<div>
-  <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
-  <p class="text-slate-500">Ringkasan singkat aktivitas perpustakaan.</p>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-description">Ringkasan singkat aktivitas perpustakaan.</p>
+  </div>
 </div>
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
   <?php foreach ($stats as $stat): ?>
-    <div class="panel-card p-5">
-      <p class="text-sm text-slate-500"><?= esc($stat['label']) ?></p>
-      <p class="mt-1 text-3xl font-bold"><?= esc($stat['value']) ?></p>
+    <div class="stat-card">
+      <p class="stat-card-label"><?= esc($stat['label']) ?></p>
+      <p class="stat-card-value"><?= esc($stat['value']) ?></p>
     </div>
   <?php endforeach; ?>
 </div>
@@ -18,11 +20,11 @@
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
   <div class="panel-card">
     <div class="table-divider p-4">
-      <h3 class="text-base font-semibold">Transaksi Terbaru</h3>
+      <h3 class="section-heading text-base">Transaksi Terbaru</h3>
     </div>
     <div class="space-y-1 p-4">
       <?php if ($recentTransactions === []): ?>
-        <p class="text-sm text-slate-500">Belum ada transaksi terbaru.</p>
+        <div class="soft-info">Belum ada transaksi terbaru.</div>
       <?php else: ?>
         <?php foreach ($recentTransactions as $item): ?>
           <div class="table-divider flex items-center justify-between py-2 last:border-b-0">
@@ -41,15 +43,15 @@
 
   <div class="panel-card">
     <div class="table-divider p-4">
-      <h3 class="text-base font-semibold">Ringkasan Keterlambatan</h3>
+      <h3 class="section-heading text-base">Ringkasan Keterlambatan</h3>
     </div>
     <div class="p-4">
       <div class="mb-4 grid grid-cols-2 gap-4">
-        <div class="rounded-[1.25rem] border border-white/55 bg-white/50 p-4 text-center backdrop-blur-lg">
+        <div class="metric-tile text-center">
           <p class="text-2xl font-bold text-destructive"><?= esc(rupiah($fineSummary['unpaid'])) ?></p>
           <p class="mt-1 text-xs text-slate-500">Denda Belum Lunas</p>
         </div>
-        <div class="rounded-[1.25rem] border border-white/55 bg-white/50 p-4 text-center backdrop-blur-lg">
+        <div class="metric-tile text-center">
           <p class="text-2xl font-bold text-success"><?= esc(rupiah($fineSummary['collected'])) ?></p>
           <p class="mt-1 text-xs text-slate-500">Denda Terkumpul</p>
         </div>
@@ -57,7 +59,7 @@
 
       <div class="space-y-1">
         <?php if ($lateSummaries === []): ?>
-          <p class="text-sm text-slate-500">Tidak ada keterlambatan saat ini.</p>
+          <div class="soft-info">Tidak ada keterlambatan saat ini.</div>
         <?php else: ?>
           <?php foreach ($lateSummaries as $late): ?>
             <div class="table-divider flex items-center justify-between py-2 last:border-b-0">

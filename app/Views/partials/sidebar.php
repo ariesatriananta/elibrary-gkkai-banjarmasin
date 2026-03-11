@@ -1,6 +1,15 @@
 <?php $activeMenu = $activeMenu ?? ''; ?>
-<aside class="glass-sidebar app-fixed-sidebar app-sidebar-frame flex w-72 flex-shrink-0 flex-col">
+<aside id="app-sidebar" class="glass-sidebar app-fixed-sidebar app-sidebar-frame app-mobile-sidebar flex w-72 flex-shrink-0 flex-col">
   <div class="table-divider p-4">
+    <div class="mb-3 flex items-center justify-between lg:hidden">
+      <p class="text-sm font-semibold tracking-tight text-slate-600">Navigasi</p>
+      <button type="button" id="mobile-sidebar-close" class="mobile-nav-toggle" aria-label="Tutup navigasi">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+        </svg>
+      </button>
+    </div>
     <div class="flex justify-center">
       <img src="<?= library_logo_url() ?>" alt="<?= esc(library_brand_name()) ?>" class="h-28 w-28 rounded-xl border border-white/70 bg-white/75 object-contain p-1.5 shadow-sm">
     </div>

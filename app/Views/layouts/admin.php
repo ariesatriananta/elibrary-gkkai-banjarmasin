@@ -31,14 +31,25 @@
     <div class="page-orb page-orb-neutral bottom-[-7rem] left-1/3 h-72 w-72"></div>
   </div>
 
+  <div id="mobile-sidebar-backdrop" class="mobile-sidebar-backdrop" aria-hidden="true"></div>
+
   <div class="relative min-h-screen px-4 py-4">
     <?= $this->include('partials/sidebar') ?>
 
     <main class="app-main-with-sidebar min-w-0 pr-1">
       <header class="glass-header app-sticky-header mb-4 flex min-h-[4.75rem] items-center justify-between px-5 py-3">
-        <div class="min-w-0">
-          <p class="truncate text-lg font-semibold tracking-tight"><?= esc(library_brand_name()) ?></p>
-          <p class="truncate text-xs text-slate-500"><?= esc(church_name()) ?></p>
+        <div class="flex min-w-0 items-center gap-3">
+          <button type="button" id="mobile-sidebar-toggle" class="mobile-nav-toggle lg:hidden" aria-label="Buka navigasi" aria-expanded="false" aria-controls="app-sidebar">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+              <line x1="4" y1="7" x2="20" y2="7"></line>
+              <line x1="4" y1="12" x2="20" y2="12"></line>
+              <line x1="4" y1="17" x2="20" y2="17"></line>
+            </svg>
+          </button>
+          <div class="min-w-0">
+            <p class="truncate text-lg font-semibold tracking-tight"><?= esc(library_brand_name()) ?></p>
+            <p class="truncate text-xs text-slate-500"><?= esc(church_name()) ?></p>
+          </div>
         </div>
         <div class="flex items-center gap-3">
           <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Ubah tema tampilan" aria-pressed="false">
@@ -180,6 +191,10 @@
       const themeColorMeta = document.getElementById('theme-color-meta');
       const body = document.body;
       const skeletonContent = document.getElementById('page-loading-skeleton-content');
+      const mobileSidebar = document.getElementById('app-sidebar');
+      const mobileSidebarToggle = document.getElementById('mobile-sidebar-toggle');
+      const mobileSidebarClose = document.getElementById('mobile-sidebar-close');
+      const mobileSidebarBackdrop = document.getElementById('mobile-sidebar-backdrop');
       const accountMenu = document.querySelector('.account-menu');
       const accountToggle = document.getElementById('account-menu-toggle');
       const accountPanel = document.getElementById('account-menu-panel');
@@ -229,6 +244,17 @@
           element.classList.remove('is-loading-nav');
           element.removeAttribute('aria-busy');
         });
+      };
+
+      const setMobileSidebar = (isOpen) => {
+        if (!mobileSidebar) {
+          return;
+        }
+
+        mobileSidebar.classList.toggle('is-mobile-open', isOpen);
+        body.classList.toggle('is-mobile-sidebar-open', isOpen);
+        mobileSidebarToggle?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        mobileSidebarBackdrop?.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
       };
 
       const setSkeletonTemplate = (name) => {
@@ -317,6 +343,7 @@
             return;
           }
 
+          setMobileSidebar(false);
           setSkeletonTemplate(link.dataset.skeletonTemplate || 'default');
           link.classList.add('is-loading-nav');
           link.setAttribute('aria-busy', 'true');
@@ -364,6 +391,19 @@
 
       window.addEventListener('pageshow', stopPageLoading);
 
+      mobileSidebarToggle?.addEventListener('click', () => {
+        const nextState = !mobileSidebar?.classList.contains('is-mobile-open');
+        setMobileSidebar(nextState);
+      });
+
+      mobileSidebarClose?.addEventListener('click', () => {
+        setMobileSidebar(false);
+      });
+
+      mobileSidebarBackdrop?.addEventListener('click', () => {
+        setMobileSidebar(false);
+      });
+
       if (accountMenu) {
         const shouldOpenDropdown = accountMenu.dataset.accountDropdownOpen === 'true';
         const shouldOpenPassword = accountMenu.dataset.accountPasswordOpen === 'true';
@@ -396,6 +436,7 @@
 
         document.addEventListener('keydown', (event) => {
           if (event.key === 'Escape') {
+            setMobileSidebar(false);
             setAccountDropdown(false);
             setAccountPasswordPanel(false);
           }

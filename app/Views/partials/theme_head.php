@@ -2,8 +2,7 @@
   (() => {
     try {
       const storedTheme = window.localStorage.getItem('library-theme');
-      const preferredTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      const theme = storedTheme === 'dark' || storedTheme === 'light' ? storedTheme : preferredTheme;
+      const theme = storedTheme === 'dark' || storedTheme === 'light' ? storedTheme : 'light';
       const themeColorMeta = document.querySelector('meta[name="theme-color"]');
       document.documentElement.setAttribute('data-theme', theme);
 

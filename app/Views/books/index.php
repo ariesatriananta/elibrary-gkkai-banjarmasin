@@ -1,10 +1,10 @@
 <?= $this->extend('layouts/admin') ?>
 
 <?= $this->section('content') ?>
-<div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+<div class="page-header">
   <div>
-    <h1 class="text-2xl font-bold tracking-tight">Data Buku</h1>
-    <p class="text-slate-500">Kelola judul buku, cover, kategori, klasifikasi usia, dan copy fisik perpustakaan.</p>
+    <h1 class="page-title">Data Buku</h1>
+    <p class="page-description">Kelola judul buku, cover, kategori, klasifikasi usia, dan copy fisik perpustakaan.</p>
   </div>
   <a href="<?= site_url('books/create') ?>" class="panel-button">
     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -16,25 +16,25 @@
 </div>
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-  <div class="panel-card p-5">
-    <p class="text-sm text-slate-500">Jumlah Judul</p>
-    <p class="mt-1 text-3xl font-bold"><?= esc((string) $summary['titles']) ?></p>
+  <div class="stat-card">
+    <p class="stat-card-label">Jumlah Judul</p>
+    <p class="stat-card-value"><?= esc((string) $summary['titles']) ?></p>
   </div>
-  <div class="panel-card p-5">
-    <p class="text-sm text-slate-500">Total Copy</p>
-    <p class="mt-1 text-3xl font-bold"><?= esc((string) $summary['copies']) ?></p>
+  <div class="stat-card">
+    <p class="stat-card-label">Total Copy</p>
+    <p class="stat-card-value"><?= esc((string) $summary['copies']) ?></p>
   </div>
-  <div class="panel-card p-5">
-    <p class="text-sm text-slate-500">Copy Tersedia</p>
-    <p class="mt-1 text-3xl font-bold text-success"><?= esc((string) $summary['available']) ?></p>
+  <div class="stat-card">
+    <p class="stat-card-label">Copy Tersedia</p>
+    <p class="stat-card-value text-success"><?= esc((string) $summary['available']) ?></p>
   </div>
-  <div class="panel-card p-5">
-    <p class="text-sm text-slate-500">Copy Dipinjam</p>
-    <p class="mt-1 text-3xl font-bold text-primary"><?= esc((string) $summary['borrowed']) ?></p>
+  <div class="stat-card">
+    <p class="stat-card-label">Copy Dipinjam</p>
+    <p class="stat-card-value text-primary"><?= esc((string) $summary['borrowed']) ?></p>
   </div>
 </div>
 
-<form method="get" action="<?= site_url('books') ?>" class="panel-card p-4">
+<form method="get" action="<?= site_url('books') ?>" class="content-toolbar">
   <div class="grid grid-cols-1 gap-3 lg:grid-cols-[1.5fr_0.8fr_0.8fr_0.7fr_auto]">
     <div class="relative">
       <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -76,9 +76,9 @@
 </form>
 
 <?php if ($books === []): ?>
-  <div class="panel-card p-8 text-center">
-    <h2 class="text-lg font-semibold">Data buku tidak ditemukan</h2>
-    <p class="mt-2 text-sm text-slate-500">Coba ubah filter pencarian atau tambahkan buku baru.</p>
+  <div class="empty-state">
+    <h2 class="empty-state-title">Data buku tidak ditemukan</h2>
+    <p class="empty-state-description">Coba ubah filter pencarian atau tambahkan buku baru.</p>
   </div>
 <?php else: ?>
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -100,11 +100,11 @@
 
           <div class="flex flex-wrap gap-2">
             <?php if (! empty($book['category_name'])): ?>
-              <span class="rounded-full border border-border bg-primary/10 px-2 py-1 text-xs text-primary"><?= esc($book['category_name']) ?></span>
+              <span class="surface-chip surface-chip-primary"><?= esc($book['category_name']) ?></span>
             <?php endif; ?>
 
             <?php if (! empty($book['age_classification_name'])): ?>
-              <span class="rounded-full border border-border bg-info/10 px-2 py-1 text-xs text-info"><?= esc($book['age_classification_name']) ?></span>
+              <span class="surface-chip surface-chip-info"><?= esc($book['age_classification_name']) ?></span>
             <?php endif; ?>
 
             <span class="status-badge <?= esc($book['stock_status_class']) ?>">
@@ -112,18 +112,24 @@
             </span>
           </div>
 
-          <div class="grid grid-cols-3 gap-3 rounded-xl bg-muted p-3 text-center">
+          <div class="grid grid-cols-3 gap-3 text-center">
             <div>
-              <p class="text-xs text-slate-500">Copy</p>
-              <p class="text-lg font-semibold"><?= esc((string) $book['total_copies']) ?></p>
+              <div class="metric-tile">
+                <p class="text-xs text-slate-500">Copy</p>
+                <p class="mt-2 text-lg font-semibold"><?= esc((string) $book['total_copies']) ?></p>
+              </div>
             </div>
             <div>
-              <p class="text-xs text-slate-500">Tersedia</p>
-              <p class="text-lg font-semibold text-success"><?= esc((string) $book['available_copies']) ?></p>
+              <div class="metric-tile">
+                <p class="text-xs text-slate-500">Tersedia</p>
+                <p class="mt-2 text-lg font-semibold text-success"><?= esc((string) $book['available_copies']) ?></p>
+              </div>
             </div>
             <div>
-              <p class="text-xs text-slate-500">Dipinjam</p>
-              <p class="text-lg font-semibold text-primary"><?= esc((string) $book['borrowed_copies']) ?></p>
+              <div class="metric-tile">
+                <p class="text-xs text-slate-500">Dipinjam</p>
+                <p class="mt-2 text-lg font-semibold text-primary"><?= esc((string) $book['borrowed_copies']) ?></p>
+              </div>
             </div>
           </div>
 

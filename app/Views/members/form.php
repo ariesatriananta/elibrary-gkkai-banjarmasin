@@ -7,10 +7,10 @@ $memberId = $member['id'] ?? null;
 $errors = $errors ?? [];
 ?>
 
-<div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+<div class="page-header">
   <div>
-    <h1 class="text-2xl font-bold tracking-tight"><?= $isEdit ? 'Edit Anggota' : 'Tambah Anggota' ?></h1>
-    <p class="text-slate-500">Kelola identitas, kontak, status aktif, dan riwayat peminjaman anggota.</p>
+    <h1 class="page-title"><?= $isEdit ? 'Edit Anggota' : 'Tambah Anggota' ?></h1>
+    <p class="page-description">Kelola identitas, kontak, status aktif, dan riwayat peminjaman anggota.</p>
   </div>
   <a href="<?= site_url('members') ?>" class="panel-button-secondary w-fit">Kembali ke Data Anggota</a>
 </div>
@@ -83,11 +83,11 @@ $errors = $errors ?? [];
           <?php $selectedActive = old('is_active', (string) ($member['is_active'] ?? '1')); ?>
           <label class="mb-1 block text-sm font-medium">Status Anggota</label>
           <div class="flex gap-3">
-            <label class="flex items-center gap-2 rounded-lg border border-border px-4 py-3 text-sm">
+            <label class="option-card">
               <input type="radio" name="is_active" value="1" <?= $selectedActive === '1' ? 'checked' : '' ?>>
               Aktif
             </label>
-            <label class="flex items-center gap-2 rounded-lg border border-border px-4 py-3 text-sm">
+            <label class="option-card">
               <input type="radio" name="is_active" value="0" <?= $selectedActive === '0' ? 'checked' : '' ?>>
               Nonaktif
             </label>
@@ -106,7 +106,7 @@ $errors = $errors ?? [];
 
   <div class="space-y-6">
     <div class="panel-card p-6">
-      <h2 class="mb-4 text-lg font-semibold">Ringkasan</h2>
+      <h2 class="section-heading mb-4">Ringkasan</h2>
       <div class="space-y-3 text-sm">
         <div class="flex items-center justify-between">
           <span class="text-slate-500">Inisial</span>
@@ -140,42 +140,42 @@ $errors = $errors ?? [];
 <?php if ($isEdit): ?>
   <div class="panel-card p-6">
     <div class="mb-4">
-      <h2 class="text-lg font-semibold">Riwayat Peminjaman</h2>
-      <p class="text-sm text-slate-500">Daftar peminjaman yang pernah dilakukan anggota ini.</p>
+      <h2 class="section-heading">Riwayat Peminjaman</h2>
+      <p class="section-description">Daftar peminjaman yang pernah dilakukan anggota ini.</p>
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse">
+    <div class="data-table-wrapper overflow-x-auto">
+      <table class="data-table">
         <thead>
-          <tr class="text-left text-xs font-medium text-slate-500">
-            <th class="border-b border-border px-4 py-3">Buku</th>
-            <th class="border-b border-border px-4 py-3">Kode Copy</th>
-            <th class="border-b border-border px-4 py-3">Pinjam</th>
-            <th class="border-b border-border px-4 py-3">Jatuh Tempo</th>
-            <th class="border-b border-border px-4 py-3">Kembali</th>
-            <th class="border-b border-border px-4 py-3">Status</th>
-            <th class="border-b border-border px-4 py-3">Denda</th>
+          <tr>
+            <th>Buku</th>
+            <th>Kode Copy</th>
+            <th>Pinjam</th>
+            <th>Jatuh Tempo</th>
+            <th>Kembali</th>
+            <th>Status</th>
+            <th>Denda</th>
           </tr>
         </thead>
         <tbody>
           <?php if ($history === []): ?>
             <tr>
-              <td colspan="7" class="border-b border-border px-4 py-6 text-center text-sm text-slate-500">Belum ada riwayat peminjaman.</td>
+              <td colspan="7" class="py-10 text-center text-sm text-slate-500">Belum ada riwayat peminjaman.</td>
             </tr>
           <?php else: ?>
             <?php foreach ($history as $item): ?>
-              <tr class="text-sm">
-                <td class="border-b border-border px-4 py-3 font-medium"><?= esc($item['book_title']) ?></td>
-                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($item['copy_code']) ?></td>
-                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(format_indo_date($item['borrowed_at'])) ?></td>
-                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(format_indo_date($item['due_at'])) ?></td>
-                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($item['returned_at'] ? format_indo_date($item['returned_at']) : '-') ?></td>
-                <td class="border-b border-border px-4 py-3">
+              <tr>
+                <td class="font-medium"><?= esc($item['book_title']) ?></td>
+                <td class="text-slate-500"><?= esc($item['copy_code']) ?></td>
+                <td class="text-slate-500"><?= esc(format_indo_date($item['borrowed_at'])) ?></td>
+                <td class="text-slate-500"><?= esc(format_indo_date($item['due_at'])) ?></td>
+                <td class="text-slate-500"><?= esc($item['returned_at'] ? format_indo_date($item['returned_at']) : '-') ?></td>
+                <td>
                   <span class="status-badge status-badge-<?= esc($item['status']) ?>">
                     <?= esc(loan_status_label($item['status'])) ?>
                   </span>
                 </td>
-                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(isset($item['fine_amount']) ? rupiah($item['fine_amount']) : '-') ?></td>
+                <td class="text-slate-500"><?= esc(isset($item['fine_amount']) ? rupiah($item['fine_amount']) : '-') ?></td>
               </tr>
             <?php endforeach; ?>
           <?php endif; ?>

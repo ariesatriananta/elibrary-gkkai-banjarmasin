@@ -5,14 +5,16 @@
 $errors = $errors ?? [];
 $fineContext = $fineContext ?? [];
 ?>
-<div>
-  <h1 class="text-2xl font-bold tracking-tight">Denda & Bonus</h1>
-  <p class="text-slate-500">Atur nominal denda, catat pembayaran, dan simpan catatan bonus peminjaman.</p>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Denda & Bonus</h1>
+    <p class="page-description">Atur nominal denda, catat pembayaran, dan simpan catatan bonus peminjaman.</p>
+  </div>
 </div>
 
 <div class="grid grid-cols-1 gap-6 xl:grid-cols-[0.8fr_1.2fr]">
   <form method="post" action="<?= site_url('fines/settings') ?>" class="panel-card p-6">
-    <h2 class="mb-4 text-lg font-semibold">Pengaturan</h2>
+    <h2 class="section-heading mb-4">Pengaturan</h2>
     <div class="grid grid-cols-1 gap-4">
       <div>
         <label for="fine_per_day" class="mb-1 block text-sm font-medium">Denda per Hari</label>
@@ -33,16 +35,16 @@ $fineContext = $fineContext ?? [];
   </form>
 
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-    <div class="panel-card p-5 text-center">
-      <p class="text-sm text-slate-500">Total Denda</p>
+    <div class="stat-card text-center">
+      <p class="stat-card-label">Total Denda</p>
       <p class="mt-1 text-2xl font-bold"><?= esc(rupiah($summary['total'])) ?></p>
     </div>
-    <div class="panel-card p-5 text-center">
-      <p class="text-sm text-slate-500">Belum Lunas</p>
+    <div class="stat-card text-center">
+      <p class="stat-card-label">Belum Lunas</p>
       <p class="mt-1 text-2xl font-bold text-destructive"><?= esc(rupiah($summary['unpaid'])) ?></p>
     </div>
-    <div class="panel-card p-5 text-center">
-      <p class="text-sm text-slate-500">Terkumpul</p>
+    <div class="stat-card text-center">
+      <p class="stat-card-label">Terkumpul</p>
       <p class="mt-1 text-2xl font-bold text-success"><?= esc(rupiah($summary['collected'])) ?></p>
     </div>
   </div>
@@ -50,9 +52,9 @@ $fineContext = $fineContext ?? [];
 
 <div class="space-y-4">
   <?php if ($fines === []): ?>
-    <div class="panel-card p-8 text-center">
-      <h2 class="text-lg font-semibold">Belum ada denda</h2>
-      <p class="mt-2 text-sm text-slate-500">Denda akan muncul otomatis saat ada pinjaman yang terlambat.</p>
+    <div class="empty-state">
+      <h2 class="empty-state-title">Belum ada denda</h2>
+      <p class="empty-state-description">Denda akan muncul otomatis saat ada pinjaman yang terlambat.</p>
     </div>
   <?php else: ?>
     <?php foreach ($fines as $fine): ?>
@@ -75,21 +77,21 @@ $fineContext = $fineContext ?? [];
             </div>
 
             <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              <div class="rounded-xl bg-muted p-4">
-                <p class="text-xs uppercase tracking-wide text-slate-400">Hari Terlambat</p>
-                <p class="mt-2 text-lg font-semibold"><?= esc((string) $fine['late_days']) ?></p>
+              <div class="metric-tile">
+                <p class="metric-tile-label">Hari Terlambat</p>
+                <p class="metric-tile-value"><?= esc((string) $fine['late_days']) ?></p>
               </div>
-              <div class="rounded-xl bg-muted p-4">
-                <p class="text-xs uppercase tracking-wide text-slate-400">Tagihan</p>
-                <p class="mt-2 text-lg font-semibold"><?= esc(rupiah($fine['amount'])) ?></p>
+              <div class="metric-tile">
+                <p class="metric-tile-label">Tagihan</p>
+                <p class="metric-tile-value"><?= esc(rupiah($fine['amount'])) ?></p>
               </div>
-              <div class="rounded-xl bg-muted p-4">
-                <p class="text-xs uppercase tracking-wide text-slate-400">Dibayar</p>
-                <p class="mt-2 text-lg font-semibold text-success"><?= esc(rupiah($fine['paid_amount'])) ?></p>
+              <div class="metric-tile">
+                <p class="metric-tile-label">Dibayar</p>
+                <p class="metric-tile-value text-success"><?= esc(rupiah($fine['paid_amount'])) ?></p>
               </div>
-              <div class="rounded-xl bg-muted p-4">
-                <p class="text-xs uppercase tracking-wide text-slate-400">Sisa</p>
-                <p class="mt-2 text-lg font-semibold text-destructive"><?= esc(rupiah((float) $fine['amount'] - (float) $fine['paid_amount'])) ?></p>
+              <div class="metric-tile">
+                <p class="metric-tile-label">Sisa</p>
+                <p class="metric-tile-value text-destructive"><?= esc(rupiah((float) $fine['amount'] - (float) $fine['paid_amount'])) ?></p>
               </div>
             </div>
 
@@ -101,9 +103,9 @@ $fineContext = $fineContext ?? [];
 
           <div class="space-y-4">
             <?php if ($fine['status'] !== 'paid'): ?>
-              <form method="post" action="<?= site_url('fines/' . $fine['id'] . '/pay') ?>" class="rounded-2xl border border-border p-4">
-                <h3 class="text-base font-semibold">Pembayaran Denda</h3>
-                <p class="mt-1 text-sm text-slate-500">Masukkan nominal yang dibayar sekarang.</p>
+              <form method="post" action="<?= site_url('fines/' . $fine['id'] . '/pay') ?>" class="metric-tile">
+                <h3 class="section-heading text-base">Pembayaran Denda</h3>
+                <p class="section-description">Masukkan nominal yang dibayar sekarang.</p>
                 <div class="mt-4 flex gap-3">
                   <input type="number" min="1" max="<?= esc((string) $remainingAmount) ?>" name="payment_amount" class="panel-input <?= $isPaymentContext ? field_error_class($errors, 'payment_amount') : '' ?>" value="<?= esc((string) ($isPaymentContext ? old('payment_amount', (string) $remainingAmount) : $remainingAmount)) ?>">
                   <button type="submit" class="panel-button">Simpan</button>
@@ -114,9 +116,9 @@ $fineContext = $fineContext ?? [];
               </form>
             <?php endif; ?>
 
-            <form method="post" action="<?= site_url('fines/loan/' . $fine['loan_id'] . '/bonus-note') ?>" class="rounded-2xl border border-border p-4">
-              <h3 class="text-base font-semibold">Catatan Bonus</h3>
-              <p class="mt-1 text-sm text-slate-500">Catatan manual untuk apresiasi atau penilaian khusus.</p>
+            <form method="post" action="<?= site_url('fines/loan/' . $fine['loan_id'] . '/bonus-note') ?>" class="metric-tile">
+              <h3 class="section-heading text-base">Catatan Bonus</h3>
+              <p class="section-description">Catatan manual untuk apresiasi atau penilaian khusus.</p>
               <textarea name="note" rows="3" class="panel-input mt-4 <?= $isNoteContext ? field_error_class($errors, 'note') : '' ?>" placeholder="Contoh: Mengembalikan buku dalam kondisi sangat baik."><?= esc($isNoteContext ? old('note') : '') ?></textarea>
               <?php if ($isNoteContext && field_error($errors, 'note')): ?>
                 <p class="field-error mt-2"><?= esc(field_error($errors, 'note')) ?></p>
@@ -125,14 +127,14 @@ $fineContext = $fineContext ?? [];
             </form>
 
             <?php $notes = $bonusNotes[$fine['loan_id']] ?? []; ?>
-            <div class="rounded-2xl border border-border p-4">
-              <h3 class="text-base font-semibold">Riwayat Catatan Bonus</h3>
+            <div class="metric-tile">
+              <h3 class="section-heading text-base">Riwayat Catatan Bonus</h3>
               <?php if ($notes === []): ?>
-                <p class="mt-2 text-sm text-slate-500">Belum ada catatan bonus.</p>
+                <p class="section-description">Belum ada catatan bonus.</p>
               <?php else: ?>
                 <div class="mt-3 space-y-3">
                   <?php foreach ($notes as $note): ?>
-                    <div class="rounded-xl bg-muted p-3">
+                    <div class="metric-tile">
                       <p class="text-sm"><?= esc($note['note']) ?></p>
                       <p class="mt-1 text-xs text-slate-500"><?= esc(format_indo_date($note['created_at'], true)) ?></p>
                     </div>
