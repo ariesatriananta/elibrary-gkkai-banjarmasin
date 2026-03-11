@@ -1,11 +1,8 @@
 <?php $activeMenu = $activeMenu ?? ''; ?>
-<aside class="glass-sidebar app-sidebar-frame app-sticky-sidebar flex w-72 flex-shrink-0 flex-col">
+<aside class="glass-sidebar app-fixed-sidebar app-sidebar-frame flex w-72 flex-shrink-0 flex-col">
   <div class="table-divider p-4">
-    <div class="flex items-center gap-3">
-      <img src="<?= library_logo_url() ?>" alt="<?= esc(library_brand_name()) ?>" class="h-12 w-12 rounded-xl border border-white/70 bg-white/75 object-contain p-1.5 shadow-sm">
-      <div class="min-w-0 leading-tight">
-        <p class="text-sm font-semibold"><?= esc(library_brand_name()) ?></p>
-      </div>
+    <div class="flex justify-center">
+      <img src="<?= library_logo_url() ?>" alt="<?= esc(library_brand_name()) ?>" class="h-28 w-28 rounded-xl border border-white/70 bg-white/75 object-contain p-1.5 shadow-sm">
     </div>
   </div>
 
@@ -56,4 +53,10 @@
       Denda & Bonus
     </a>
   </nav>
+
+  <div class="table-divider mx-3"></div>
+  <div class="sidebar-footer-note px-4 py-4 text-center text-slate-500">
+    &copy; <?= esc(date('Y')) ?> <?= esc(library_brand_name()) ?><br>
+    <?= esc(church_name()) ?>
+  </div>
 </aside>

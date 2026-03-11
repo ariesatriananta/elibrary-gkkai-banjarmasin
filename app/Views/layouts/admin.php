@@ -31,10 +31,10 @@
     <div class="page-orb page-orb-neutral bottom-[-7rem] left-1/3 h-72 w-72"></div>
   </div>
 
-  <div class="relative flex min-h-screen items-start gap-4 px-4 py-4">
+  <div class="relative min-h-screen px-4 py-4">
     <?= $this->include('partials/sidebar') ?>
 
-    <main class="min-w-0 flex-1 pr-1">
+    <main class="app-main-with-sidebar min-w-0 pr-1">
       <header class="glass-header app-sticky-header mb-4 flex min-h-[4.75rem] items-center justify-between px-5 py-3">
         <div class="min-w-0">
           <p class="truncate text-lg font-semibold tracking-tight"><?= esc(library_brand_name()) ?></p>
