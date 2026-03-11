@@ -425,8 +425,14 @@ class BookController extends BaseController
             return null;
         }
 
+        $targetDirectory = ROOTPATH . 'public/assets/uploads/covers';
+
+        if (! is_dir($targetDirectory) && ! mkdir($targetDirectory, 0775, true) && ! is_dir($targetDirectory)) {
+            throw new \RuntimeException('Folder upload cover tidak dapat dibuat.');
+        }
+
         $newName = $file->getRandomName();
-        $file->move(ROOTPATH . 'public/assets/uploads/covers', $newName, true);
+        $file->move($targetDirectory, $newName, true);
 
         return 'assets/uploads/covers/' . $newName;
     }

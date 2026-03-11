@@ -5,7 +5,7 @@
   </div>
 </div>
 <div class="page-skeleton-grid">
-  <?php for ($i = 0; $i < 4; $i++): ?>
+  <?php for ($i = 0; $i < 5; $i++): ?>
     <div class="page-loading-skeleton-panel page-skeleton-stat"></div>
   <?php endfor; ?>
 </div>

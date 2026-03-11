@@ -8,7 +8,7 @@
   </div>
 </div>
 
-<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+<div class="dashboard-kpi-grid">
   <?php foreach ($stats as $stat): ?>
     <div class="stat-card">
       <p class="stat-card-label"><?= esc($stat['label']) ?></p>

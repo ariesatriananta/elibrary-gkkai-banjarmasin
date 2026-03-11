@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\BookModel;
+use App\Models\BookCopyModel;
 use App\Models\FineModel;
 use App\Models\LoanModel;
 use App\Models\MemberModel;
@@ -14,6 +15,7 @@ class DashboardController extends BaseController
         service('libraryService')->syncStatuses();
 
         $bookModel = new BookModel();
+        $bookCopyModel = new BookCopyModel();
         $memberModel = new MemberModel();
         $loanModel = new LoanModel();
         $fineModel = new FineModel();
@@ -55,7 +57,8 @@ class DashboardController extends BaseController
             'pageTitle' => 'Dashboard',
             'activeMenu' => 'dashboard',
             'stats' => [
-                ['label' => 'Total Buku', 'value' => (string) $bookModel->countAllResults()],
+                ['label' => 'Total Buku', 'value' => (string) $bookCopyModel->countAllResults()],
+                ['label' => 'Total Judul Buku', 'value' => (string) $bookModel->countAllResults()],
                 ['label' => 'Total Anggota', 'value' => (string) $memberModel->countAllResults()],
                 ['label' => 'Sedang Dipinjam', 'value' => (string) $loanModel->whereIn('status', ['borrowed', 'overdue'])->countAllResults()],
                 ['label' => 'Terlambat', 'value' => (string) $loanModel->where('status', 'overdue')->countAllResults()],

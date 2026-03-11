@@ -335,6 +335,16 @@
     @apply panel-card p-5;
   }
 
+  .dashboard-kpi-grid {
+    @apply grid grid-cols-1 gap-4 sm:grid-cols-2;
+  }
+
+  @media (min-width: 1024px) {
+    .dashboard-kpi-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+
   .stat-card-label {
     @apply text-sm text-slate-500;
   }
