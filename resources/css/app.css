@@ -131,6 +131,10 @@
     box-shadow: var(--panel-shadow-strong);
   }
 
+  .app-sidebar-frame {
+    min-height: calc(100vh - 2rem);
+  }
+
   .glass-header {
     @apply backdrop-blur-xl;
     border-radius: 1.75rem;
@@ -197,7 +201,7 @@
     position: sticky;
     top: 1rem;
     align-self: flex-start;
-    max-height: calc(100vh - 2rem);
+    height: calc(100vh - 2rem);
     overflow-y: auto;
   }
 
