@@ -68,6 +68,11 @@ class TransactionController extends BaseController
             'defaultDueDate' => date('Y-m-d', strtotime('+' . $defaultLoanDays . ' days')),
             'errors' => session('errors') ?? [],
             'activeTab' => $activeTab,
+            'fineRules' => [
+                'late_fine_per_week' => service('libraryService')->getSettingNumber('late_fine_per_week', 5000),
+                'late_grace_days' => service('libraryService')->getSettingNumber('late_grace_days', 3),
+                'damage_fine_amount' => service('libraryService')->getSettingNumber('damage_fine_amount', 100000),
+            ],
         ]);
     }
 
@@ -127,6 +132,7 @@ class TransactionController extends BaseController
         $rules = [
             'loan_id' => 'required|integer',
             'returned_at' => 'required|valid_date[Y-m-d]',
+            'return_condition' => 'required|in_list[good,damaged,lost]',
             'notes' => 'permit_empty|max_length[500]',
         ];
 
@@ -153,6 +159,7 @@ class TransactionController extends BaseController
         service('libraryService')->returnLoan(
             $loanId,
             $returnedAt,
+            (string) $this->request->getPost('return_condition'),
             trim((string) $this->request->getPost('notes'))
         );
 
@@ -219,20 +226,36 @@ class TransactionController extends BaseController
                 l.borrowed_at,
                 l.due_at,
                 l.returned_at,
+                l.return_condition,
                 l.status,
                 l.notes,
                 b.title AS book_title,
                 bc.copy_code,
                 m.full_name AS member_name,
                 m.member_number,
-                f.amount AS fine_amount,
-                f.paid_amount AS fine_paid_amount,
-                f.status AS fine_status
+                (
+                    SELECT COALESCE(SUM(f.amount), 0)
+                    FROM fines f
+                    WHERE f.loan_id = l.id
+                      AND f.fulfillment_method = 'payment'
+                ) AS fine_amount,
+                (
+                    SELECT COALESCE(SUM(f.paid_amount), 0)
+                    FROM fines f
+                    WHERE f.loan_id = l.id
+                      AND f.fulfillment_method = 'payment'
+                ) AS fine_paid_amount,
+                (
+                    SELECT COUNT(*)
+                    FROM fines f
+                    WHERE f.loan_id = l.id
+                      AND f.fine_type = 'lost'
+                      AND f.status = 'open'
+                ) AS open_replacement_count
             FROM loans l
             INNER JOIN book_copies bc ON bc.id = l.book_copy_id
             INNER JOIN books b ON b.id = bc.book_id
             INNER JOIN members m ON m.id = l.member_id
-            LEFT JOIN fines f ON f.loan_id = l.id
             ORDER BY l.borrowed_at DESC, l.id DESC
         ";
 

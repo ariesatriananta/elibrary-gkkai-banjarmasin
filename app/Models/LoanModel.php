@@ -17,6 +17,7 @@ class LoanModel extends Model
         'borrowed_at',
         'due_at',
         'returned_at',
+        'return_condition',
         'status',
         'notes',
     ];

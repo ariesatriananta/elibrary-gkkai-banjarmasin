@@ -171,11 +171,22 @@ $errors = $errors ?? [];
                 <td class="text-slate-500"><?= esc(format_indo_date($item['due_at'])) ?></td>
                 <td class="text-slate-500"><?= esc($item['returned_at'] ? format_indo_date($item['returned_at']) : '-') ?></td>
                 <td>
-                  <span class="status-badge status-badge-<?= esc($item['status']) ?>">
+                  <span class="status-badge <?= $item['status'] === 'lost' ? 'status-badge-overdue' : 'status-badge-' . esc($item['status']) ?>">
                     <?= esc(loan_status_label($item['status'])) ?>
                   </span>
+                  <?php if (! empty($item['return_condition']) && $item['status'] !== 'lost'): ?>
+                    <p class="mt-1 text-xs text-slate-500"><?= esc(loan_condition_label($item['return_condition'])) ?></p>
+                  <?php endif; ?>
                 </td>
-                <td class="text-slate-500"><?= esc(isset($item['fine_amount']) ? rupiah($item['fine_amount']) : '-') ?></td>
+                <td class="text-slate-500">
+                  <?php if ((int) ($item['open_replacement_count'] ?? 0) > 0): ?>
+                    <span class="status-badge status-badge-neutral">Menunggu Penggantian</span>
+                  <?php elseif (isset($item['fine_amount']) && (float) $item['fine_amount'] > 0): ?>
+                    <?= esc(rupiah($item['fine_amount'])) ?>
+                  <?php else: ?>
+                    -
+                  <?php endif; ?>
+                </td>
               </tr>
             <?php endforeach; ?>
           <?php endif; ?>

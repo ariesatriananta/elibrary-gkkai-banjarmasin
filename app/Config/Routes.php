@@ -33,5 +33,6 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('fines', 'FineController::index');
     $routes->post('fines/settings', 'FineController::updateSettings');
     $routes->post('fines/(:num)/pay', 'FineController::pay/$1');
+    $routes->post('fines/(:num)/resolve', 'FineController::resolve/$1');
     $routes->post('fines/loan/(:num)/bonus-note', 'FineController::addBonusNote/$1');
 });

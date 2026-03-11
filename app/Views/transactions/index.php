@@ -4,6 +4,11 @@
 <?php
 $errors = $errors ?? [];
 $activeTab = $activeTab ?? 'history';
+$fineRules = $fineRules ?? [
+  'late_fine_per_week' => 5000,
+  'late_grace_days' => 3,
+  'damage_fine_amount' => 100000,
+];
 ?>
 <div class="page-header">
   <div>
@@ -113,6 +118,49 @@ $activeTab = $activeTab ?? 'history';
           <?php endif; ?>
         </div>
         <div class="md:col-span-2">
+          <label class="mb-1 block text-sm font-medium">Kondisi Pengembalian</label>
+          <select name="return_condition" class="panel-input <?= field_error_class($errors, 'return_condition') ?>" required>
+            <option value="good" <?= old('return_condition', 'good') === 'good' ? 'selected' : '' ?>>Baik, dikembalikan normal</option>
+            <option value="damaged" <?= old('return_condition') === 'damaged' ? 'selected' : '' ?>>Rusak, kenakan denda kerusakan</option>
+            <option value="lost" <?= old('return_condition') === 'lost' ? 'selected' : '' ?>>Hilang, wajib ganti buku</option>
+          </select>
+          <?php if (field_error($errors, 'return_condition')): ?>
+            <p class="field-error mt-1"><?= esc(field_error($errors, 'return_condition')) ?></p>
+          <?php endif; ?>
+          <p class="mt-1 text-xs text-slate-500">Kondisi ini akan menentukan denda tambahan atau kewajiban penggantian buku.</p>
+        </div>
+        <div class="md:col-span-2">
+          <div id="return-preview-panel" class="metric-tile space-y-4">
+            <div>
+              <h4 class="section-heading text-base">Ringkasan Pengembalian</h4>
+              <p class="section-description">Informasi ini diperbarui otomatis sebelum pengembalian disimpan.</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div class="metric-tile">
+                <p class="metric-tile-label">Tanggal Pinjam</p>
+                <p id="return-preview-borrowed-at" class="metric-tile-value">-</p>
+              </div>
+              <div class="metric-tile">
+                <p class="metric-tile-label">Jatuh Tempo</p>
+                <p id="return-preview-due-at" class="metric-tile-value">-</p>
+              </div>
+              <div class="metric-tile">
+                <p class="metric-tile-label">Keterlambatan</p>
+                <p id="return-preview-late-days" class="metric-tile-value">-</p>
+              </div>
+              <div class="metric-tile">
+                <p class="metric-tile-label">Estimasi Denda</p>
+                <p id="return-preview-total-fine" class="metric-tile-value text-destructive">-</p>
+              </div>
+            </div>
+
+            <div id="return-preview-detail" class="soft-info">
+              Pilih pinjaman aktif dan kondisi pengembalian untuk melihat estimasi denda.
+            </div>
+          </div>
+        </div>
+        <div class="md:col-span-2">
           <label class="mb-1 block text-sm font-medium">Catatan</label>
           <textarea name="notes" rows="3" class="panel-input <?= field_error_class($errors, 'notes') ?>"><?= esc(old('notes', '')) ?></textarea>
           <?php if (field_error($errors, 'notes')): ?>
@@ -141,6 +189,7 @@ $activeTab = $activeTab ?? 'history';
       <option value="borrowed" <?= $filters['status'] === 'borrowed' ? 'selected' : '' ?>>Dipinjam</option>
       <option value="overdue" <?= $filters['status'] === 'overdue' ? 'selected' : '' ?>>Terlambat</option>
       <option value="returned" <?= $filters['status'] === 'returned' ? 'selected' : '' ?>>Dikembalikan</option>
+      <option value="lost" <?= $filters['status'] === 'lost' ? 'selected' : '' ?>>Hilang</option>
     </select>
     <div class="flex gap-2">
       <button type="submit" class="panel-button justify-center">Filter</button>
@@ -182,12 +231,21 @@ $activeTab = $activeTab ?? 'history';
                 <td class="text-slate-500"><?= esc(format_indo_date($row['due_at'])) ?></td>
                 <td class="text-slate-500"><?= esc($row['returned_at'] ? format_indo_date($row['returned_at']) : '-') ?></td>
                 <td>
-                  <span class="status-badge status-badge-<?= esc($row['status']) ?>">
+                  <span class="status-badge <?= $row['status'] === 'lost' ? 'status-badge-overdue' : 'status-badge-' . esc($row['status']) ?>">
                     <?= esc(loan_status_label($row['status'])) ?>
                   </span>
+                  <?php if (! empty($row['return_condition']) && $row['status'] !== 'lost'): ?>
+                    <p class="mt-1 text-xs text-slate-500"><?= esc(loan_condition_label($row['return_condition'])) ?></p>
+                  <?php endif; ?>
                 </td>
                 <td class="text-slate-500">
-                  <?= isset($row['fine_amount']) && $row['fine_amount'] !== null ? esc(rupiah($row['fine_amount'])) : '-' ?>
+                  <?php if ((int) ($row['open_replacement_count'] ?? 0) > 0): ?>
+                    <span class="status-badge status-badge-neutral">Menunggu Penggantian</span>
+                  <?php elseif (isset($row['fine_amount']) && (float) $row['fine_amount'] > 0): ?>
+                    <?= esc(rupiah($row['fine_amount'])) ?>
+                  <?php else: ?>
+                    -
+                  <?php endif; ?>
                 </td>
               </tr>
             <?php endforeach; ?>
@@ -208,6 +266,8 @@ $activeTab = $activeTab ?? 'history';
   const tabs = document.querySelectorAll('.transaction-tab');
   const panels = document.querySelectorAll('.transaction-panel');
   const initialTab = <?= json_encode($activeTab) ?>;
+  const activeLoans = <?= json_encode($activeLoans, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+  const fineRules = <?= json_encode($fineRules, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
   function openTransactionTab(target) {
     tabs.forEach((item) => {
@@ -237,6 +297,143 @@ $activeTab = $activeTab ?? 'history';
     });
   });
 
+  const formatDateDisplay = (value) => {
+    if (! value) {
+      return '-';
+    }
+
+    const dateOnly = value.includes(' ') ? value.split(' ')[0] : value;
+    const [year, month, day] = dateOnly.split('-').map(Number);
+
+    if (! year || ! month || ! day) {
+      return value;
+    }
+
+    const date = new Date(year, month - 1, day);
+
+    return new Intl.DateTimeFormat('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(date);
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+
+  const daysDiff = (fromDate, toDate) => {
+    if (! fromDate || ! toDate) {
+      return 0;
+    }
+
+    const [fromYear, fromMonth, fromDay] = fromDate.split('-').map(Number);
+    const [toYear, toMonth, toDay] = toDate.split('-').map(Number);
+
+    if (! fromYear || ! toYear) {
+      return 0;
+    }
+
+    const from = new Date(fromYear, fromMonth - 1, fromDay);
+    const to = new Date(toYear, toMonth - 1, toDay);
+
+    return Math.max(0, Math.floor((to.getTime() - from.getTime()) / 86400000));
+  };
+
+  const loanLookup = Object.fromEntries(activeLoans.map((loan) => [String(loan.id), loan]));
+  const returnLoanSelect = document.querySelector('select[name="loan_id"]');
+  const returnDateInput = document.querySelector('input[name="returned_at"]');
+  const returnConditionSelect = document.querySelector('select[name="return_condition"]');
+  const previewBorrowedAt = document.getElementById('return-preview-borrowed-at');
+  const previewDueAt = document.getElementById('return-preview-due-at');
+  const previewLateDays = document.getElementById('return-preview-late-days');
+  const previewTotalFine = document.getElementById('return-preview-total-fine');
+  const previewDetail = document.getElementById('return-preview-detail');
+
+  const updateReturnPreview = () => {
+    if (! previewDetail || ! returnLoanSelect || ! returnDateInput || ! returnConditionSelect) {
+      return;
+    }
+
+    const selectedLoan = loanLookup[String(returnLoanSelect.value)];
+    const returnedAt = returnDateInput.value;
+    const returnCondition = returnConditionSelect.value || 'good';
+
+    if (! selectedLoan) {
+      previewBorrowedAt.textContent = '-';
+      previewDueAt.textContent = '-';
+      previewLateDays.textContent = '-';
+      previewTotalFine.textContent = '-';
+      previewDetail.textContent = 'Pilih pinjaman aktif dan kondisi pengembalian untuk melihat estimasi denda.';
+      return;
+    }
+
+    const borrowedDate = String(selectedLoan.borrowed_at || '').split(' ')[0];
+    const dueDate = String(selectedLoan.due_at || '').split(' ')[0];
+    const rawLateDays = returnedAt ? daysDiff(dueDate, returnedAt) : 0;
+    const graceDays = Number(fineRules.late_grace_days || 0);
+    const effectiveLateDays = Math.max(0, rawLateDays - graceDays);
+    const lateWeeks = effectiveLateDays > 0 ? Math.ceil(effectiveLateDays / 7) : 0;
+    const lateFine = returnCondition === 'lost' ? 0 : lateWeeks * Number(fineRules.late_fine_per_week || 0);
+    const damageFine = returnCondition === 'damaged' ? Number(fineRules.damage_fine_amount || 0) : 0;
+    const totalFine = lateFine + damageFine;
+
+    previewBorrowedAt.textContent = formatDateDisplay(borrowedDate);
+    previewDueAt.textContent = formatDateDisplay(dueDate);
+    previewLateDays.textContent = rawLateDays > 0 ? `${rawLateDays} hari` : 'Tidak telat';
+    previewTotalFine.textContent = returnCondition === 'lost' ? 'Ganti Buku' : formatCurrency(totalFine);
+
+    const detailParts = [
+      `Buku: ${selectedLoan.book_title} (${selectedLoan.copy_code})`,
+      `Tanggal pinjam: ${formatDateDisplay(borrowedDate)}`,
+      `Jatuh tempo: ${formatDateDisplay(dueDate)}`,
+    ];
+
+    if (returnCondition === 'good') {
+      if (lateFine > 0) {
+        detailParts.push(`Telat ${rawLateDays} hari, setelah masa tenggang ${graceDays} hari ditagihkan ${lateWeeks} minggu = ${formatCurrency(lateFine)}.`);
+      } else if (rawLateDays > 0) {
+        detailParts.push(`Masih dalam masa tenggang ${graceDays} hari, belum ada denda keterlambatan.`);
+      } else {
+        detailParts.push('Pengembalian normal, belum ada estimasi denda.');
+      }
+    }
+
+    if (returnCondition === 'damaged') {
+      if (lateFine > 0) {
+        detailParts.push(`Denda terlambat: ${formatCurrency(lateFine)} (${lateWeeks} minggu).`);
+      } else if (rawLateDays > 0) {
+        detailParts.push(`Keterlambatan masih dalam masa tenggang ${graceDays} hari.`);
+      }
+
+      detailParts.push(`Denda kerusakan buku: ${formatCurrency(damageFine)}.`);
+      detailParts.push(`Total estimasi denda: ${formatCurrency(totalFine)}.`);
+    }
+
+    if (returnCondition === 'lost') {
+      detailParts.push('Buku ditandai hilang. Anggota wajib mengganti buku dalam kondisi baru atau bekas layak baca.');
+      detailParts.push('Kasus ini tidak menampilkan nominal uang otomatis.');
+    }
+
+    previewDetail.innerHTML = detailParts.map((item) => `<p>${escapeHtml(item)}</p>`).join('');
+  };
+
+  returnLoanSelect?.addEventListener('change', updateReturnPreview);
+  returnDateInput?.addEventListener('input', updateReturnPreview);
+  returnConditionSelect?.addEventListener('change', updateReturnPreview);
+
   openTransactionTab(initialTab);
+  updateReturnPreview();
 </script>
 <?= $this->endSection() ?>

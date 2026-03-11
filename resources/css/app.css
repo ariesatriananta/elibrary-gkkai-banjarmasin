@@ -491,6 +491,10 @@
     @apply bg-destructive text-white;
   }
 
+  .status-badge-lost {
+    @apply bg-warning text-white;
+  }
+
   .status-badge-returned {
     @apply bg-slate-200 text-slate-600;
   }

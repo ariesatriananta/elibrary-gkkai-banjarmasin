@@ -111,6 +111,7 @@ if (! function_exists('loan_status_label')) {
             'borrowed' => 'Dipinjam',
             'overdue' => 'Terlambat',
             'returned' => 'Dikembalikan',
+            'lost' => 'Hilang',
             default => ucfirst($status),
         };
     }
@@ -123,7 +124,33 @@ if (! function_exists('fine_status_label')) {
             'unpaid' => 'Belum Lunas',
             'partial' => 'Cicil',
             'paid' => 'Lunas',
+            'open' => 'Menunggu Penggantian',
+            'resolved' => 'Selesai',
             default => ucfirst($status),
+        };
+    }
+}
+
+if (! function_exists('fine_type_label')) {
+    function fine_type_label(string $type): string
+    {
+        return match ($type) {
+            'late' => 'Keterlambatan',
+            'damage' => 'Kerusakan Buku',
+            'lost' => 'Kehilangan Buku',
+            default => ucfirst($type),
+        };
+    }
+}
+
+if (! function_exists('loan_condition_label')) {
+    function loan_condition_label(?string $condition): string
+    {
+        return match ($condition) {
+            'good', null, '' => 'Baik',
+            'damaged' => 'Rusak',
+            'lost' => 'Hilang',
+            default => ucfirst((string) $condition),
         };
     }
 }

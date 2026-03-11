@@ -37,7 +37,9 @@ class FineController extends BaseController
             'errors' => session('errors') ?? [],
             'fineContext' => session()->getFlashdata('fine_context') ?? [],
             'settings' => [
-                'fine_per_day' => service('libraryService')->getSettingNumber('fine_per_day', 1500),
+                'late_fine_per_week' => service('libraryService')->getSettingNumber('late_fine_per_week', 5000),
+                'late_grace_days' => service('libraryService')->getSettingNumber('late_grace_days', 3),
+                'damage_fine_amount' => service('libraryService')->getSettingNumber('damage_fine_amount', 100000),
                 'loan_duration_days' => service('libraryService')->getSettingNumber('loan_duration_days', 14),
             ],
         ]);
@@ -46,7 +48,9 @@ class FineController extends BaseController
     public function updateSettings(): RedirectResponse
     {
         $rules = [
-            'fine_per_day' => 'required|integer|greater_than_equal_to[0]',
+            'late_fine_per_week' => 'required|integer|greater_than_equal_to[0]',
+            'late_grace_days' => 'required|integer|greater_than_equal_to[0]',
+            'damage_fine_amount' => 'required|integer|greater_than_equal_to[0]',
             'loan_duration_days' => 'required|integer|greater_than_equal_to[1]',
         ];
 
@@ -59,8 +63,10 @@ class FineController extends BaseController
                 ->with('error', 'Pengaturan denda belum valid.');
         }
 
-        service('libraryService')->saveSettings(
-            (int) $this->request->getPost('fine_per_day'),
+        service('libraryService')->saveFineRules(
+            (int) $this->request->getPost('late_fine_per_week'),
+            (int) $this->request->getPost('late_grace_days'),
+            (int) $this->request->getPost('damage_fine_amount'),
             (int) $this->request->getPost('loan_duration_days')
         );
 
@@ -75,6 +81,10 @@ class FineController extends BaseController
 
         if (! $fine) {
             return redirect()->to(site_url('fines'))->with('error', 'Data denda tidak ditemukan.');
+        }
+
+        if (($fine['fulfillment_method'] ?? 'payment') !== 'payment') {
+            return redirect()->to(site_url('fines'))->with('error', 'Jenis kasus ini tidak dibayar dengan nominal uang.');
         }
 
         $paymentInput = trim((string) $this->request->getPost('payment_amount'));
@@ -104,6 +114,29 @@ class FineController extends BaseController
         return redirect()->to(site_url('fines'))->with('success', 'Pembayaran denda berhasil dicatat.');
     }
 
+    public function resolve(int $fineId): RedirectResponse
+    {
+        $fine = $this->fineModel->find($fineId);
+
+        if (! $fine) {
+            return redirect()->to(site_url('fines'))->with('error', 'Data denda tidak ditemukan.');
+        }
+
+        if (($fine['fine_type'] ?? '') !== 'lost') {
+            return redirect()->to(site_url('fines'))->with('error', 'Hanya kasus kehilangan yang dapat diselesaikan dengan penggantian buku.');
+        }
+
+        $note = trim((string) $this->request->getPost('resolution_note'));
+
+        service('libraryService')->resolveReplacementFine(
+            $fineId,
+            session('admin_id') ? (int) session('admin_id') : null,
+            $note !== '' ? $note : null
+        );
+
+        return redirect()->to(site_url('fines'))->with('success', 'Kasus kehilangan buku telah ditandai selesai.');
+    }
+
     public function addBonusNote(int $loanId): RedirectResponse
     {
         $note = trim((string) $this->request->getPost('note'));
@@ -128,6 +161,13 @@ class FineController extends BaseController
             SELECT
                 f.id,
                 f.loan_id,
+                f.fine_type,
+                f.fine_label,
+                f.rate_amount,
+                f.rate_unit,
+                f.grace_days,
+                f.quantity,
+                f.fulfillment_method,
                 f.fine_per_day,
                 f.late_days,
                 f.amount,
@@ -135,8 +175,10 @@ class FineController extends BaseController
                 f.status,
                 f.calculated_at,
                 f.paid_at,
+                f.resolved_at,
                 f.notes,
                 l.due_at,
+                l.return_condition,
                 b.title AS book_title,
                 bc.copy_code,
                 m.full_name AS member_name
@@ -146,7 +188,11 @@ class FineController extends BaseController
             INNER JOIN books b ON b.id = bc.book_id
             INNER JOIN members m ON m.id = l.member_id
             ORDER BY
-                CASE f.status WHEN 'unpaid' THEN 1 WHEN 'partial' THEN 2 ELSE 3 END,
+                CASE
+                    WHEN f.status IN ('unpaid', 'partial', 'open') THEN 1
+                    WHEN f.status = 'resolved' THEN 2
+                    ELSE 3
+                END,
                 f.calculated_at DESC,
                 f.id DESC
         ";
@@ -156,13 +202,16 @@ class FineController extends BaseController
 
     private function summary(array $fines): array
     {
-        $total = array_sum(array_map(fn (array $fine): float => (float) $fine['amount'], $fines));
-        $collected = array_sum(array_map(fn (array $fine): float => (float) $fine['paid_amount'], $fines));
+        $paymentFines = array_values(array_filter($fines, fn (array $fine): bool => ($fine['fulfillment_method'] ?? 'payment') === 'payment'));
+        $total = array_sum(array_map(fn (array $fine): float => (float) $fine['amount'], $paymentFines));
+        $collected = array_sum(array_map(fn (array $fine): float => (float) $fine['paid_amount'], $paymentFines));
+        $openReplacements = count(array_filter($fines, fn (array $fine): bool => ($fine['fine_type'] ?? '') === 'lost' && ($fine['status'] ?? '') === 'open'));
 
         return [
             'total' => $total,
             'unpaid' => max(0, $total - $collected),
             'collected' => $collected,
+            'open_replacements' => $openReplacements,
         ];
     }
 

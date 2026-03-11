@@ -192,16 +192,32 @@ class MemberController extends BaseController
                 l.borrowed_at,
                 l.due_at,
                 l.returned_at,
+                l.return_condition,
                 l.status,
                 b.title AS book_title,
                 bc.copy_code,
-                f.amount AS fine_amount,
-                f.paid_amount AS fine_paid_amount,
-                f.status AS fine_status
+                (
+                    SELECT COALESCE(SUM(f.amount), 0)
+                    FROM fines f
+                    WHERE f.loan_id = l.id
+                      AND f.fulfillment_method = 'payment'
+                ) AS fine_amount,
+                (
+                    SELECT COALESCE(SUM(f.paid_amount), 0)
+                    FROM fines f
+                    WHERE f.loan_id = l.id
+                      AND f.fulfillment_method = 'payment'
+                ) AS fine_paid_amount,
+                (
+                    SELECT COUNT(*)
+                    FROM fines f
+                    WHERE f.loan_id = l.id
+                      AND f.fine_type = 'lost'
+                      AND f.status = 'open'
+                ) AS open_replacement_count
             FROM loans l
             INNER JOIN book_copies bc ON bc.id = l.book_copy_id
             INNER JOIN books b ON b.id = bc.book_id
-            LEFT JOIN fines f ON f.loan_id = l.id
             WHERE l.member_id = ?
             ORDER BY l.borrowed_at DESC, l.id DESC
         ";

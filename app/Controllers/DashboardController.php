@@ -45,7 +45,8 @@ class DashboardController extends BaseController
             INNER JOIN members m ON m.id = l.member_id
             INNER JOIN book_copies bc ON bc.id = l.book_copy_id
             INNER JOIN books b ON b.id = bc.book_id
-            WHERE f.status IN ('unpaid', 'partial')
+            WHERE f.fine_type = 'late'
+              AND f.status IN ('unpaid', 'partial')
             ORDER BY f.amount DESC, f.id DESC
             LIMIT 5
         ")->getResultArray();

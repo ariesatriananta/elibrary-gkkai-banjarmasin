@@ -180,7 +180,7 @@ class BookController extends BaseController
         $rules = [
             'barcode_value' => 'permit_empty|max_length[80]|is_unique[book_copies.barcode_value]',
             'legacy_code' => 'permit_empty|max_length[50]',
-            'status' => 'required|in_list[available,borrowed]',
+            'status' => 'required|in_list[available,borrowed,lost]',
             'notes' => 'permit_empty|max_length[500]',
         ];
 
@@ -216,7 +216,7 @@ class BookController extends BaseController
         $rules = [
             'barcode_value' => 'permit_empty|max_length[80]',
             'legacy_code' => 'permit_empty|max_length[50]',
-            'status' => 'required|in_list[available,borrowed]',
+            'status' => 'required|in_list[available,borrowed,lost]',
             'notes' => 'permit_empty|max_length[500]',
         ];
 
@@ -523,6 +523,7 @@ class BookController extends BaseController
         return [
             'available' => 'Tersedia',
             'borrowed' => 'Dipinjam',
+            'lost' => 'Hilang',
         ];
     }
 }
