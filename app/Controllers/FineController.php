@@ -9,6 +9,8 @@ use CodeIgniter\HTTP\RedirectResponse;
 
 class FineController extends BaseController
 {
+    private const PER_PAGE = 8;
+
     private FineModel $fineModel;
     private LoanBonusNoteModel $bonusNoteModel;
     private SettingModel $settingModel;
@@ -24,16 +26,20 @@ class FineController extends BaseController
     {
         service('libraryService')->syncStatuses();
 
-        $fines = $this->fineRows();
+        $filters = $this->filters();
+        $pagination = $this->paginationState($filters);
+        $fines = $this->fineRows($filters, $pagination['per_page'], $pagination['page']);
         $loanIds = array_column($fines, 'loan_id');
         $bonusNotes = $loanIds === [] ? [] : $this->bonusNotesByLoan($loanIds);
 
         return view('fines/index', [
             'pageTitle' => 'Denda & Bonus',
             'activeMenu' => 'fines',
-            'summary' => $this->summary($fines),
+            'summary' => $pagination['summary'],
             'fines' => $fines,
             'bonusNotes' => $bonusNotes,
+            'filters' => $filters,
+            'pagination' => $pagination,
             'errors' => session('errors') ?? [],
             'fineContext' => session()->getFlashdata('fine_context') ?? [],
             'settings' => [
@@ -72,7 +78,7 @@ class FineController extends BaseController
 
         service('libraryService')->syncStatuses();
 
-        return redirect()->to(site_url('fines'))->with('success', 'Pengaturan denda berhasil diperbarui.');
+        return $this->redirectToFines()->with('success', 'Pengaturan denda berhasil diperbarui.');
     }
 
     public function pay(int $fineId): RedirectResponse
@@ -111,7 +117,7 @@ class FineController extends BaseController
 
         service('libraryService')->payFine($fineId, $paymentAmount);
 
-        return redirect()->to(site_url('fines'))->with('success', 'Pembayaran denda berhasil dicatat.');
+        return $this->redirectToFines()->with('success', 'Pembayaran denda berhasil dicatat.');
     }
 
     public function resolve(int $fineId): RedirectResponse
@@ -134,7 +140,7 @@ class FineController extends BaseController
             $note !== '' ? $note : null
         );
 
-        return redirect()->to(site_url('fines'))->with('success', 'Kasus kehilangan buku telah ditandai selesai.');
+        return $this->redirectToFines()->with('success', 'Kasus kehilangan buku telah ditandai selesai.');
     }
 
     public function addBonusNote(int $loanId): RedirectResponse
@@ -152,13 +158,61 @@ class FineController extends BaseController
 
         service('libraryService')->addBonusNote($loanId, session('admin_id') ? (int) session('admin_id') : null, $note);
 
-        return redirect()->to(site_url('fines'))->with('success', 'Catatan bonus berhasil ditambahkan.');
+        return $this->redirectToFines()->with('success', 'Catatan bonus berhasil ditambahkan.');
     }
 
-    private function fineRows(): array
+    private function filters(): array
     {
-        $sql = "
-            SELECT
+        $type = trim((string) $this->request->getGet('type'));
+        $status = trim((string) $this->request->getGet('status'));
+
+        return [
+            'q' => trim((string) $this->request->getGet('q')),
+            'type' => in_array($type, ['late', 'damage', 'lost'], true) ? $type : '',
+            'status' => in_array($status, ['active', 'unpaid', 'partial', 'paid', 'open', 'resolved'], true) ? $status : '',
+        ];
+    }
+
+    private function paginationState(array $filters): array
+    {
+        $summaryRow = $this->fineBaseBuilder($filters)
+            ->select("
+                COUNT(*) AS total_rows,
+                COALESCE(SUM(CASE WHEN COALESCE(f.fulfillment_method, 'payment') = 'payment' THEN f.amount ELSE 0 END), 0) AS total_amount,
+                COALESCE(SUM(CASE WHEN COALESCE(f.fulfillment_method, 'payment') = 'payment' THEN f.paid_amount ELSE 0 END), 0) AS collected_amount,
+                COALESCE(SUM(CASE WHEN f.fine_type = 'lost' AND f.status = 'open' THEN 1 ELSE 0 END), 0) AS open_replacements
+            ", false)
+            ->get()
+            ->getRowArray() ?? [];
+
+        $totalRows = (int) ($summaryRow['total_rows'] ?? 0);
+        $perPage = self::PER_PAGE;
+        $totalPages = max(1, (int) ceil($totalRows / $perPage));
+        $page = max(1, (int) $this->request->getGet('page'));
+        $page = min($page, $totalPages);
+        $offset = $totalRows > 0 ? (($page - 1) * $perPage) + 1 : 0;
+        $through = $totalRows > 0 ? min($offset + $perPage - 1, $totalRows) : 0;
+
+        return [
+            'page' => $page,
+            'per_page' => $perPage,
+            'total_rows' => $totalRows,
+            'total_pages' => $totalPages,
+            'from' => $offset,
+            'to' => $through,
+            'summary' => [
+                'total' => (float) ($summaryRow['total_amount'] ?? 0),
+                'unpaid' => max(0, (float) ($summaryRow['total_amount'] ?? 0) - (float) ($summaryRow['collected_amount'] ?? 0)),
+                'collected' => (float) ($summaryRow['collected_amount'] ?? 0),
+                'open_replacements' => (int) ($summaryRow['open_replacements'] ?? 0),
+            ],
+        ];
+    }
+
+    private function fineRows(array $filters, int $perPage, int $page): array
+    {
+        return $this->fineBaseBuilder($filters)
+            ->select("
                 f.id,
                 f.loan_id,
                 f.fine_type,
@@ -182,37 +236,55 @@ class FineController extends BaseController
                 b.title AS book_title,
                 bc.copy_code,
                 m.full_name AS member_name
-            FROM fines f
-            INNER JOIN loans l ON l.id = f.loan_id
-            INNER JOIN book_copies bc ON bc.id = l.book_copy_id
-            INNER JOIN books b ON b.id = bc.book_id
-            INNER JOIN members m ON m.id = l.member_id
-            ORDER BY
+            ", false)
+            ->orderBy("
                 CASE
                     WHEN f.status IN ('unpaid', 'partial', 'open') THEN 1
                     WHEN f.status = 'resolved' THEN 2
                     ELSE 3
-                END,
-                f.calculated_at DESC,
-                f.id DESC
-        ";
-
-        return db_connect()->query($sql)->getResultArray();
+                END
+            ", '', false)
+            ->orderBy('f.calculated_at', 'DESC')
+            ->orderBy('f.id', 'DESC')
+            ->limit($perPage, max(0, ($page - 1) * $perPage))
+            ->get()
+            ->getResultArray();
     }
 
-    private function summary(array $fines): array
+    private function fineBaseBuilder(array $filters)
     {
-        $paymentFines = array_values(array_filter($fines, fn (array $fine): bool => ($fine['fulfillment_method'] ?? 'payment') === 'payment'));
-        $total = array_sum(array_map(fn (array $fine): float => (float) $fine['amount'], $paymentFines));
-        $collected = array_sum(array_map(fn (array $fine): float => (float) $fine['paid_amount'], $paymentFines));
-        $openReplacements = count(array_filter($fines, fn (array $fine): bool => ($fine['fine_type'] ?? '') === 'lost' && ($fine['status'] ?? '') === 'open'));
+        $builder = db_connect()->table('fines f');
 
-        return [
-            'total' => $total,
-            'unpaid' => max(0, $total - $collected),
-            'collected' => $collected,
-            'open_replacements' => $openReplacements,
-        ];
+        $builder
+            ->join('loans l', 'l.id = f.loan_id')
+            ->join('book_copies bc', 'bc.id = l.book_copy_id')
+            ->join('books b', 'b.id = bc.book_id')
+            ->join('members m', 'm.id = l.member_id');
+
+        if ($filters['q'] !== '') {
+            $builder
+                ->groupStart()
+                ->like('m.full_name', $filters['q'])
+                ->orLike('b.title', $filters['q'])
+                ->orLike('bc.copy_code', $filters['q'])
+                ->groupEnd();
+        }
+
+        if ($filters['type'] !== '') {
+            $builder->where('f.fine_type', $filters['type']);
+        }
+
+        match ($filters['status']) {
+            'active' => $builder->whereIn('f.status', ['unpaid', 'partial', 'open']),
+            'unpaid' => $builder->where('f.status', 'unpaid'),
+            'partial' => $builder->where('f.status', 'partial'),
+            'paid' => $builder->where('f.status', 'paid'),
+            'open' => $builder->where('f.status', 'open'),
+            'resolved' => $builder->where('f.status', 'resolved'),
+            default => null,
+        };
+
+        return $builder;
     }
 
     private function bonusNotesByLoan(array $loanIds): array
@@ -229,5 +301,10 @@ class FineController extends BaseController
         }
 
         return $grouped;
+    }
+
+    private function redirectToFines(): RedirectResponse
+    {
+        return redirect()->back() ?? redirect()->to(site_url('fines'));
     }
 }

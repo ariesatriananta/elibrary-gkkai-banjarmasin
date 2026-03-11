@@ -4,18 +4,65 @@
 <?php
 $errors = $errors ?? [];
 $fineContext = $fineContext ?? [];
+$settingsModalOpen = ($fineContext['panel'] ?? null) === 'settings';
+$filters = $filters ?? ['q' => '', 'type' => '', 'status' => ''];
+$pagination = $pagination ?? ['page' => 1, 'total_pages' => 1, 'total_rows' => 0, 'from' => 0, 'to' => 0];
+$pageQueryBase = array_filter([
+    'q' => $filters['q'] ?? '',
+    'type' => $filters['type'] ?? '',
+    'status' => $filters['status'] ?? '',
+], static fn ($value): bool => $value !== '' && $value !== null);
 ?>
 <div class="page-header">
   <div>
     <h1 class="page-title">Denda & Bonus</h1>
     <p class="page-description">Kelola aturan keterlambatan mingguan, denda kerusakan, dan kewajiban penggantian buku hilang.</p>
   </div>
+  <button type="button" id="fine-settings-open" class="panel-button">
+    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82L4.21 7.2a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01A1.65 1.65 0 0 0 10 3.25V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01A1.65 1.65 0 0 0 20.75 10H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+    Aturan Denda
+  </button>
 </div>
 
-<div class="grid grid-cols-1 gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-  <form method="post" action="<?= site_url('fines/settings') ?>" class="panel-card p-6">
-    <h2 class="section-heading mb-4">Aturan Denda</h2>
-    <div class="grid grid-cols-1 gap-4">
+<div class="grid auto-rows-min content-start items-start grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  <div class="stat-card h-auto text-center">
+    <p class="stat-card-label">Total Denda</p>
+    <p class="mt-1 text-2xl font-bold"><?= esc(rupiah($summary['total'])) ?></p>
+  </div>
+  <div class="stat-card h-auto text-center">
+    <p class="stat-card-label">Belum Lunas</p>
+    <p class="mt-1 text-2xl font-bold text-destructive"><?= esc(rupiah($summary['unpaid'])) ?></p>
+  </div>
+  <div class="stat-card h-auto text-center">
+    <p class="stat-card-label">Terkumpul</p>
+    <p class="mt-1 text-2xl font-bold text-success"><?= esc(rupiah($summary['collected'])) ?></p>
+  </div>
+  <div class="stat-card h-auto text-center">
+    <p class="stat-card-label">Penggantian Buku</p>
+    <p class="mt-1 text-2xl font-bold text-warning"><?= esc((string) $summary['open_replacements']) ?></p>
+  </div>
+</div>
+
+<div id="fine-settings-modal" class="<?= $settingsModalOpen ? '' : 'hidden' ?> fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div id="fine-settings-backdrop" class="absolute inset-0 bg-slate-950/35 backdrop-blur-sm"></div>
+  <div class="panel-card relative z-10 w-full max-w-2xl p-6 lg:p-7">
+    <div class="mb-4 flex items-start justify-between gap-4">
+      <div>
+        <h2 class="section-heading">Aturan Denda</h2>
+        <p class="section-description">Atur nominal keterlambatan mingguan, masa tenggang, denda kerusakan, dan durasi pinjam default.</p>
+      </div>
+      <button type="button" id="fine-settings-close" class="panel-button-secondary px-3" aria-label="Tutup dialog aturan denda">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form method="post" action="<?= site_url('fines/settings') ?>" class="grid grid-cols-1 gap-4">
       <div>
         <label for="late_fine_per_week" class="mb-1 block text-sm font-medium">Denda Keterlambatan per Minggu</label>
         <input id="late_fine_per_week" name="late_fine_per_week" type="number" min="0" value="<?= esc(old('late_fine_per_week', (string) $settings['late_fine_per_week'])) ?>" class="panel-input <?= ($fineContext['panel'] ?? null) === 'settings' ? field_error_class($errors, 'late_fine_per_week') : '' ?>" required>
@@ -47,37 +94,62 @@ $fineContext = $fineContext ?? [];
       <div class="soft-info">
         Denda keterlambatan dihitung per minggu dan baru aktif setelah melewati masa tenggang. Untuk buku hilang, anggota wajib mengganti buku dan tidak dikenakan nominal otomatis.
       </div>
-      <button type="submit" class="panel-button w-fit">Simpan Aturan</button>
-    </div>
-  </form>
-
-  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-    <div class="stat-card text-center">
-      <p class="stat-card-label">Total Denda</p>
-      <p class="mt-1 text-2xl font-bold"><?= esc(rupiah($summary['total'])) ?></p>
-    </div>
-    <div class="stat-card text-center">
-      <p class="stat-card-label">Belum Lunas</p>
-      <p class="mt-1 text-2xl font-bold text-destructive"><?= esc(rupiah($summary['unpaid'])) ?></p>
-    </div>
-    <div class="stat-card text-center">
-      <p class="stat-card-label">Terkumpul</p>
-      <p class="mt-1 text-2xl font-bold text-success"><?= esc(rupiah($summary['collected'])) ?></p>
-    </div>
-    <div class="stat-card text-center">
-      <p class="stat-card-label">Penggantian Buku</p>
-      <p class="mt-1 text-2xl font-bold text-warning"><?= esc((string) $summary['open_replacements']) ?></p>
-    </div>
+      <div class="flex justify-end gap-3">
+        <button type="button" id="fine-settings-cancel" class="panel-button-secondary">Tutup</button>
+        <button type="submit" class="panel-button">Simpan Aturan</button>
+      </div>
+    </form>
   </div>
 </div>
+
+<form method="get" action="<?= site_url('fines') ?>" class="content-toolbar">
+  <div class="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,220px)_minmax(0,220px)_auto] xl:items-end">
+    <div class="relative">
+      <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" name="q" value="<?= esc($filters['q']) ?>" placeholder="Cari anggota, judul buku, atau kode copy..." class="panel-input pl-9">
+    </div>
+
+    <select name="type" class="panel-input">
+      <option value="">Semua Jenis</option>
+      <option value="late" <?= $filters['type'] === 'late' ? 'selected' : '' ?>>Keterlambatan</option>
+      <option value="damage" <?= $filters['type'] === 'damage' ? 'selected' : '' ?>>Kerusakan Buku</option>
+      <option value="lost" <?= $filters['type'] === 'lost' ? 'selected' : '' ?>>Kehilangan Buku</option>
+    </select>
+
+    <select name="status" class="panel-input">
+      <option value="">Semua Status</option>
+      <option value="active" <?= $filters['status'] === 'active' ? 'selected' : '' ?>>Kasus Aktif</option>
+      <option value="unpaid" <?= $filters['status'] === 'unpaid' ? 'selected' : '' ?>>Belum Lunas</option>
+      <option value="partial" <?= $filters['status'] === 'partial' ? 'selected' : '' ?>>Cicil</option>
+      <option value="paid" <?= $filters['status'] === 'paid' ? 'selected' : '' ?>>Lunas</option>
+      <option value="open" <?= $filters['status'] === 'open' ? 'selected' : '' ?>>Menunggu Penggantian</option>
+      <option value="resolved" <?= $filters['status'] === 'resolved' ? 'selected' : '' ?>>Selesai</option>
+    </select>
+
+    <div class="flex gap-2 xl:flex-nowrap xl:justify-end">
+      <button type="submit" class="panel-button justify-center">Filter</button>
+      <a href="<?= site_url('fines') ?>" class="panel-button-secondary justify-center">Reset</a>
+    </div>
+  </div>
+</form>
 
 <div class="space-y-4">
   <?php if ($fines === []): ?>
     <div class="empty-state">
       <h2 class="empty-state-title">Belum ada kasus denda</h2>
-      <p class="empty-state-description">Denda akan muncul otomatis dari keterlambatan, kerusakan, atau laporan kehilangan buku.</p>
+      <p class="empty-state-description">Denda akan muncul otomatis dari keterlambatan, kerusakan, atau laporan kehilangan buku. Coba ubah filter jika data yang dicari belum muncul.</p>
     </div>
   <?php else: ?>
+    <div class="flex flex-col gap-2 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+      <p>Menampilkan <?= esc((string) $pagination['from']) ?>-<?= esc((string) $pagination['to']) ?> dari <?= esc((string) $pagination['total_rows']) ?> kasus.</p>
+      <?php if ($filters['q'] !== '' || $filters['type'] !== '' || $filters['status'] !== ''): ?>
+        <p>Filter aktif: <?= esc($filters['q'] !== '' ? 'pencarian' : '') ?><?= esc($filters['q'] !== '' && ($filters['type'] !== '' || $filters['status'] !== '') ? ', ' : '') ?><?= esc($filters['type'] !== '' ? fine_type_label($filters['type']) : '') ?><?= esc($filters['type'] !== '' && $filters['status'] !== '' ? ', ' : '') ?><?= esc(match ($filters['status']) { 'active' => 'Kasus Aktif', 'unpaid' => 'Belum Lunas', 'partial' => 'Cicil', 'paid' => 'Lunas', 'open' => 'Menunggu Penggantian', 'resolved' => 'Selesai', default => '', }) ?></p>
+      <?php endif; ?>
+    </div>
+
     <?php foreach ($fines as $fine): ?>
       <?php
       $isPaymentContext = ($fineContext['panel'] ?? null) === 'payment' && (int) ($fineContext['fine_id'] ?? 0) === (int) $fine['id'];
@@ -201,10 +273,68 @@ $fineContext = $fineContext ?? [];
         </div>
       </div>
     <?php endforeach; ?>
+
+    <?php if (($pagination['total_pages'] ?? 1) > 1): ?>
+      <div class="content-toolbar">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p class="text-sm text-slate-500">Halaman <?= esc((string) $pagination['page']) ?> dari <?= esc((string) $pagination['total_pages']) ?></p>
+          <div class="flex flex-wrap gap-2">
+            <?php
+            $prevPage = max(1, (int) $pagination['page'] - 1);
+            $nextPage = min((int) $pagination['total_pages'], (int) $pagination['page'] + 1);
+            $startPage = max(1, (int) $pagination['page'] - 2);
+            $endPage = min((int) $pagination['total_pages'], $startPage + 4);
+            $startPage = max(1, $endPage - 4);
+            ?>
+
+            <a href="<?= site_url('fines' . ($pagination['page'] > 1 ? '?' . http_build_query($pageQueryBase + ['page' => $prevPage]) : (empty($pageQueryBase) ? '' : '?' . http_build_query($pageQueryBase)))) ?>" class="panel-button-secondary <?= $pagination['page'] <= 1 ? 'pointer-events-none opacity-50' : '' ?>">Sebelumnya</a>
+
+            <?php for ($pageNumber = $startPage; $pageNumber <= $endPage; $pageNumber++): ?>
+              <?php $pageUrl = site_url('fines' . '?' . http_build_query($pageQueryBase + ['page' => $pageNumber])); ?>
+              <a href="<?= $pageUrl ?>" class="<?= $pageNumber === (int) $pagination['page'] ? 'panel-button' : 'panel-button-secondary' ?>">
+                <?= esc((string) $pageNumber) ?>
+              </a>
+            <?php endfor; ?>
+
+            <a href="<?= site_url('fines' . ($pagination['page'] < $pagination['total_pages'] ? '?' . http_build_query($pageQueryBase + ['page' => $nextPage]) : '?' . http_build_query($pageQueryBase + ['page' => $pagination['page']]))) ?>" class="panel-button-secondary <?= $pagination['page'] >= $pagination['total_pages'] ? 'pointer-events-none opacity-50' : '' ?>">Berikutnya</a>
+          </div>
+        </div>
+      </div>
+    <?php endif; ?>
   <?php endif; ?>
 </div>
 <?= $this->endSection() ?>
 
 <?= $this->section('pageSkeleton') ?>
 <?= $this->include('partials/skeletons/fines') ?>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+  const fineSettingsModal = document.getElementById('fine-settings-modal');
+  const fineSettingsOpen = document.getElementById('fine-settings-open');
+  const fineSettingsClose = document.getElementById('fine-settings-close');
+  const fineSettingsCancel = document.getElementById('fine-settings-cancel');
+  const fineSettingsBackdrop = document.getElementById('fine-settings-backdrop');
+
+  const setFineSettingsModal = (isOpen) => {
+    if (! fineSettingsModal) {
+      return;
+    }
+
+    fineSettingsModal.classList.toggle('hidden', !isOpen);
+    document.body.classList.toggle('overflow-hidden', isOpen);
+  };
+
+  fineSettingsOpen?.addEventListener('click', () => setFineSettingsModal(true));
+  fineSettingsClose?.addEventListener('click', () => setFineSettingsModal(false));
+  fineSettingsCancel?.addEventListener('click', () => setFineSettingsModal(false));
+  fineSettingsBackdrop?.addEventListener('click', () => setFineSettingsModal(false));
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      setFineSettingsModal(false);
+    }
+  });
+</script>
 <?= $this->endSection() ?>
