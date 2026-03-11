@@ -211,7 +211,7 @@ $copyForm = session()->getFlashdata('copy_form') ?? [];
           </div>
           <div class="flex items-center justify-between">
             <span class="text-slate-500">Dibuat</span>
-            <span class="font-medium"><?= esc((string) ($book['created_at'] ?? '-')) ?></span>
+            <span class="font-medium"><?= esc(isset($book['created_at']) ? format_indo_date($book['created_at'], true) : '-') ?></span>
           </div>
         </div>
       </div>

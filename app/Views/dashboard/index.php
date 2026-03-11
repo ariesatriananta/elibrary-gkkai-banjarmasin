@@ -28,7 +28,7 @@
           <div class="table-divider flex items-center justify-between py-2 last:border-b-0">
             <div>
               <p class="text-sm font-medium"><?= esc($item['book_title']) ?></p>
-              <p class="text-xs text-slate-500"><?= esc($item['member_name']) ?> - <?= esc(substr((string) $item['borrowed_at'], 0, 10)) ?></p>
+              <p class="text-xs text-slate-500"><?= esc($item['member_name']) ?> - <?= esc(format_indo_date($item['borrowed_at'])) ?></p>
             </div>
             <span class="status-badge status-badge-<?= esc($item['status']) ?>">
               <?= esc(loan_status_label($item['status'])) ?>

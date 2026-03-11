@@ -57,6 +57,53 @@ if (! function_exists('field_error_class')) {
     }
 }
 
+if (! function_exists('format_indo_date')) {
+    function format_indo_date(\DateTimeInterface|string|null $value, bool $withTime = false): string
+    {
+        if ($value === null || trim((string) $value) === '') {
+            return '-';
+        }
+
+        $months = [
+            1 => 'Jan',
+            2 => 'Feb',
+            3 => 'Mar',
+            4 => 'Apr',
+            5 => 'Mei',
+            6 => 'Jun',
+            7 => 'Jul',
+            8 => 'Agu',
+            9 => 'Sep',
+            10 => 'Okt',
+            11 => 'Nov',
+            12 => 'Des',
+        ];
+
+        try {
+            $timezone = new \DateTimeZone(config('App')->appTimezone ?? 'Asia/Jakarta');
+
+            $date = $value instanceof \DateTimeInterface
+                ? \DateTimeImmutable::createFromInterface($value)->setTimezone($timezone)
+                : new \DateTimeImmutable((string) $value, $timezone);
+        } catch (\Throwable) {
+            return trim((string) $value);
+        }
+
+        $formatted = sprintf(
+            '%02d %s %04d',
+            (int) $date->format('d'),
+            $months[(int) $date->format('n')] ?? $date->format('M'),
+            (int) $date->format('Y')
+        );
+
+        if (! $withTime) {
+            return $formatted;
+        }
+
+        return $formatted . ' ' . $date->format('H:i');
+    }
+}
+
 if (! function_exists('loan_status_label')) {
     function loan_status_label(string $status): string
     {

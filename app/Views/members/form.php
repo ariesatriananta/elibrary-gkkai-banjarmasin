@@ -167,9 +167,9 @@ $errors = $errors ?? [];
               <tr class="text-sm">
                 <td class="border-b border-border px-4 py-3 font-medium"><?= esc($item['book_title']) ?></td>
                 <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($item['copy_code']) ?></td>
-                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(substr((string) $item['borrowed_at'], 0, 10)) ?></td>
-                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(substr((string) $item['due_at'], 0, 10)) ?></td>
-                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($item['returned_at'] ? substr((string) $item['returned_at'], 0, 10) : '-') ?></td>
+                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(format_indo_date($item['borrowed_at'])) ?></td>
+                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(format_indo_date($item['due_at'])) ?></td>
+                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($item['returned_at'] ? format_indo_date($item['returned_at']) : '-') ?></td>
                 <td class="border-b border-border px-4 py-3">
                   <span class="status-badge status-badge-<?= esc($item['status']) ?>">
                     <?= esc(loan_status_label($item['status'])) ?>

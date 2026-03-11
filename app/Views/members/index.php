@@ -94,7 +94,7 @@
                 <p><?= esc($member['phone'] ?: '-') ?></p>
                 <p class="text-xs"><?= esc($member['email'] ?: '-') ?></p>
               </td>
-              <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($member['joined_at'] ?: '-') ?></td>
+              <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($member['joined_at'] ? format_indo_date($member['joined_at']) : '-') ?></td>
               <td class="border-b border-border px-4 py-3">
                 <span class="status-badge <?= (int) $member['is_active'] === 1 ? 'status-badge-available' : 'status-badge-returned' ?>">
                   <?= (int) $member['is_active'] === 1 ? 'Aktif' : 'Nonaktif' ?>

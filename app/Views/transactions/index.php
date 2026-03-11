@@ -176,9 +176,9 @@ $activeTab = $activeTab ?? 'history';
                   <p><?= esc($row['member_name']) ?></p>
                   <p class="text-xs text-slate-500"><?= esc($row['member_number']) ?></p>
                 </td>
-                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(substr((string) $row['borrowed_at'], 0, 10)) ?></td>
-                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(substr((string) $row['due_at'], 0, 10)) ?></td>
-                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($row['returned_at'] ? substr((string) $row['returned_at'], 0, 10) : '-') ?></td>
+                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(format_indo_date($row['borrowed_at'])) ?></td>
+                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc(format_indo_date($row['due_at'])) ?></td>
+                <td class="border-b border-border px-4 py-3 text-slate-500"><?= esc($row['returned_at'] ? format_indo_date($row['returned_at']) : '-') ?></td>
                 <td class="border-b border-border px-4 py-3">
                   <span class="status-badge status-badge-<?= esc($row['status']) ?>">
                     <?= esc(loan_status_label($row['status'])) ?>

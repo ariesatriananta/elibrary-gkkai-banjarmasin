@@ -94,8 +94,8 @@ $fineContext = $fineContext ?? [];
             </div>
 
             <div class="space-y-2 text-sm text-slate-500">
-              <p>Jatuh tempo: <?= esc(substr((string) $fine['due_at'], 0, 10)) ?></p>
-              <p>Dihitung pada: <?= esc(substr((string) $fine['calculated_at'], 0, 16)) ?></p>
+              <p>Jatuh tempo: <?= esc(format_indo_date($fine['due_at'])) ?></p>
+              <p>Dihitung pada: <?= esc(format_indo_date($fine['calculated_at'], true)) ?></p>
             </div>
           </div>
 
@@ -134,7 +134,7 @@ $fineContext = $fineContext ?? [];
                   <?php foreach ($notes as $note): ?>
                     <div class="rounded-xl bg-muted p-3">
                       <p class="text-sm"><?= esc($note['note']) ?></p>
-                      <p class="mt-1 text-xs text-slate-500"><?= esc(substr((string) $note['created_at'], 0, 16)) ?></p>
+                      <p class="mt-1 text-xs text-slate-500"><?= esc(format_indo_date($note['created_at'], true)) ?></p>
                     </div>
                   <?php endforeach; ?>
                 </div>
