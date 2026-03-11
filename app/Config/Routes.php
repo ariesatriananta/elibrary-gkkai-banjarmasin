@@ -11,6 +11,7 @@ $routes->post('logout', 'AuthController::logout');
 
 $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('/', 'DashboardController::index');
+    $routes->post('account/password', 'AuthController::changePassword');
     $routes->get('books', 'BookController::index');
     $routes->get('books/create', 'BookController::create');
     $routes->post('books', 'BookController::store');

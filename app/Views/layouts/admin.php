@@ -15,6 +15,9 @@
   <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
 </head>
 <?php $pageSkeleton = trim($this->renderSection('pageSkeleton')); ?>
+<?php $accountPasswordErrors = session('account_password_errors') ?? []; ?>
+<?php $accountDropdownOpen = session('account_dropdown_open') ? 'true' : 'false'; ?>
+<?php $accountPasswordOpen = session('account_password_open') ? 'true' : 'false'; ?>
 <body class="app-shell">
   <div class="app-progress" aria-hidden="true">
     <div class="app-progress-track">
@@ -58,15 +61,83 @@
               </svg>
             </span>
           </button>
-          <div class="text-right leading-tight">
-            <p class="text-sm font-medium"><?= esc(session('admin_name') ?? 'Petugas') ?></p>
-            <p class="text-xs text-slate-500">Admin Perpustakaan</p>
-          </div>
-          <form method="post" action="<?= site_url('logout') ?>">
-            <button type="submit" class="panel-button-secondary text-xs">
-              Logout
+          <div
+            class="account-menu"
+            data-account-dropdown-open="<?= esc($accountDropdownOpen) ?>"
+            data-account-password-open="<?= esc($accountPasswordOpen) ?>"
+          >
+            <button type="button" id="account-menu-toggle" class="account-avatar-button" aria-label="Menu akun" aria-expanded="false">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                <path d="M20 21a8 8 0 0 0-16 0"></path>
+                <circle cx="12" cy="8" r="4"></circle>
+              </svg>
             </button>
-          </form>
+
+            <div id="account-menu-panel" class="account-menu-panel mt-2">
+              <div class="panel-card account-menu-surface p-4">
+                <div class="account-user-badge p-4">
+                  <div class="flex items-center gap-3">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-sm font-semibold text-primary">
+                      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                        <path d="M20 21a8 8 0 0 0-16 0"></path>
+                        <circle cx="12" cy="8" r="4"></circle>
+                      </svg>
+                    </div>
+                    <div class="min-w-0">
+                      <p class="truncate text-sm font-semibold"><?= esc(session('admin_name') ?? 'Petugas') ?></p>
+                      <p class="truncate text-xs text-slate-500">@<?= esc(session('admin_username') ?? 'admin') ?></p>
+                    </div>
+                  </div>
+                  <div class="mt-3 flex items-center justify-between text-xs">
+                    <span class="rounded-full border border-border bg-white/50 px-2.5 py-1 text-slate-500">Role</span>
+                    <span class="font-medium text-primary">Admin Perpustakaan</span>
+                  </div>
+                </div>
+
+                <div class="mt-4 space-y-3">
+                  <button type="button" id="account-password-toggle" class="panel-button-secondary w-full justify-center">
+                    Ganti Password
+                  </button>
+
+                  <div id="account-password-panel" class="hidden rounded-[1.3rem] border border-border bg-muted/70 p-4">
+                    <form method="post" action="<?= site_url('account/password') ?>" class="space-y-3">
+                      <div>
+                        <label for="current_password" class="mb-1 block text-sm font-medium">Password Saat Ini</label>
+                        <input id="current_password" name="current_password" type="password" class="panel-input <?= isset($accountPasswordErrors['current_password']) ? 'panel-input-error' : '' ?>" autocomplete="current-password">
+                        <?php if (isset($accountPasswordErrors['current_password'])): ?>
+                          <p class="field-error mt-1"><?= esc($accountPasswordErrors['current_password']) ?></p>
+                        <?php endif; ?>
+                      </div>
+
+                      <div>
+                        <label for="new_password" class="mb-1 block text-sm font-medium">Password Baru</label>
+                        <input id="new_password" name="new_password" type="password" class="panel-input <?= isset($accountPasswordErrors['new_password']) ? 'panel-input-error' : '' ?>" autocomplete="new-password">
+                        <?php if (isset($accountPasswordErrors['new_password'])): ?>
+                          <p class="field-error mt-1"><?= esc($accountPasswordErrors['new_password']) ?></p>
+                        <?php endif; ?>
+                      </div>
+
+                      <div>
+                        <label for="confirm_password" class="mb-1 block text-sm font-medium">Konfirmasi Password</label>
+                        <input id="confirm_password" name="confirm_password" type="password" class="panel-input <?= isset($accountPasswordErrors['confirm_password']) ? 'panel-input-error' : '' ?>" autocomplete="new-password">
+                        <?php if (isset($accountPasswordErrors['confirm_password'])): ?>
+                          <p class="field-error mt-1"><?= esc($accountPasswordErrors['confirm_password']) ?></p>
+                        <?php endif; ?>
+                      </div>
+
+                      <button type="submit" class="panel-button w-full justify-center">Simpan Password</button>
+                    </form>
+                  </div>
+
+                  <form method="post" action="<?= site_url('logout') ?>">
+                    <button type="submit" class="panel-button-secondary w-full justify-center text-destructive">
+                      Logout
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -109,6 +180,11 @@
       const themeColorMeta = document.getElementById('theme-color-meta');
       const body = document.body;
       const skeletonContent = document.getElementById('page-loading-skeleton-content');
+      const accountMenu = document.querySelector('.account-menu');
+      const accountToggle = document.getElementById('account-menu-toggle');
+      const accountPanel = document.getElementById('account-menu-panel');
+      const accountPasswordToggle = document.getElementById('account-password-toggle');
+      const accountPasswordPanel = document.getElementById('account-password-panel');
       const colors = {
         light: '#4c7a5e',
         dark: '#0f172a',
@@ -167,6 +243,23 @@
         }
 
         skeletonContent.innerHTML = template.innerHTML;
+      };
+
+      const setAccountDropdown = (isOpen) => {
+        if (!accountPanel || !accountToggle) {
+          return;
+        }
+
+        accountPanel.classList.toggle('is-open', isOpen);
+        accountToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      };
+
+      const setAccountPasswordPanel = (isOpen) => {
+        if (!accountPasswordPanel) {
+          return;
+        }
+
+        accountPasswordPanel.classList.toggle('hidden', !isOpen);
       };
 
       const detectSkeletonTemplate = (href) => {
@@ -270,6 +363,44 @@
       });
 
       window.addEventListener('pageshow', stopPageLoading);
+
+      if (accountMenu) {
+        const shouldOpenDropdown = accountMenu.dataset.accountDropdownOpen === 'true';
+        const shouldOpenPassword = accountMenu.dataset.accountPasswordOpen === 'true';
+
+        setAccountDropdown(shouldOpenDropdown);
+        setAccountPasswordPanel(shouldOpenPassword);
+
+        accountToggle?.addEventListener('click', () => {
+          const isOpen = !accountPanel?.classList.contains('is-open');
+          setAccountDropdown(isOpen);
+
+          if (!isOpen) {
+            setAccountPasswordPanel(false);
+          }
+        });
+
+        accountPasswordToggle?.addEventListener('click', () => {
+          const isOpen = accountPasswordPanel ? accountPasswordPanel.classList.contains('hidden') : false;
+
+          setAccountDropdown(true);
+          setAccountPasswordPanel(isOpen);
+        });
+
+        document.addEventListener('click', (event) => {
+          if (!accountMenu.contains(event.target)) {
+            setAccountDropdown(false);
+            setAccountPasswordPanel(false);
+          }
+        });
+
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') {
+            setAccountDropdown(false);
+            setAccountPasswordPanel(false);
+          }
+        });
+      }
     })();
   </script>
   <?= $this->renderSection('scripts') ?>
