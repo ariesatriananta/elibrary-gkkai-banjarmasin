@@ -13,6 +13,9 @@ DirectoryIndex public/index.php
     RewriteRule ^assets/(.*)$ public/assets/$1 [L,NC]
     RewriteRule ^favicon\.ico$ public/favicon.ico [L,NC]
     RewriteRule ^robots\.txt$ public/robots.txt [L,NC]
+    RewriteRule ^logo\.png$ public/logo.png [L,NC]
+    RewriteRule ^gedung-gereja\.png$ public/gedung-gereja.png [L,NC]
+    RewriteRule ^site\.webmanifest$ public/site.webmanifest [L,NC]
 
     RewriteRule ^$ public/index.php [L]
 
