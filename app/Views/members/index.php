@@ -1,6 +1,13 @@
 <?= $this->extend('layouts/admin') ?>
 
 <?= $this->section('content') ?>
+<?php
+$pagination = $pagination ?? ['page' => 1, 'total_pages' => 1, 'total_rows' => 0, 'from' => 0, 'to' => 0];
+$pageQueryBase = array_filter([
+    'q' => $filters['q'] ?? '',
+    'status' => $filters['status'] ?? '',
+], static fn ($value): bool => $value !== '' && $value !== null);
+?>
 <div class="page-header">
   <div>
     <h1 class="page-title">Data Anggota</h1>
@@ -63,6 +70,13 @@
     <p class="empty-state-description">Tambahkan anggota perpustakaan terlebih dahulu agar transaksi peminjaman bisa dilakukan.</p>
   </div>
 <?php else: ?>
+  <div class="flex flex-col gap-2 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+    <p>Menampilkan <?= esc((string) $pagination['from']) ?>-<?= esc((string) $pagination['to']) ?> dari <?= esc((string) $pagination['total_rows']) ?> anggota.</p>
+    <?php if (($filters['q'] ?? '') !== '' || ($filters['status'] ?? '') !== ''): ?>
+      <p>Filter aktif pada data anggota.</p>
+    <?php endif; ?>
+  </div>
+
   <div class="data-table-wrapper">
     <div class="overflow-x-auto">
       <table class="data-table">
@@ -121,6 +135,34 @@
       </table>
     </div>
   </div>
+
+  <?php if (($pagination['total_pages'] ?? 1) > 1): ?>
+    <div class="content-toolbar">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-sm text-slate-500">Halaman <?= esc((string) $pagination['page']) ?> dari <?= esc((string) $pagination['total_pages']) ?></p>
+        <div class="flex flex-wrap gap-2">
+          <?php
+          $prevPage = max(1, (int) $pagination['page'] - 1);
+          $nextPage = min((int) $pagination['total_pages'], (int) $pagination['page'] + 1);
+          $startPage = max(1, (int) $pagination['page'] - 2);
+          $endPage = min((int) $pagination['total_pages'], $startPage + 4);
+          $startPage = max(1, $endPage - 4);
+          ?>
+
+          <a href="<?= site_url('members' . ($pagination['page'] > 1 ? '?' . http_build_query($pageQueryBase + ['page' => $prevPage]) : (empty($pageQueryBase) ? '' : '?' . http_build_query($pageQueryBase)))) ?>" class="panel-button-secondary <?= $pagination['page'] <= 1 ? 'pointer-events-none opacity-50' : '' ?>">Sebelumnya</a>
+
+          <?php for ($pageNumber = $startPage; $pageNumber <= $endPage; $pageNumber++): ?>
+            <?php $pageUrl = site_url('members' . '?' . http_build_query($pageQueryBase + ['page' => $pageNumber])); ?>
+            <a href="<?= $pageUrl ?>" class="<?= $pageNumber === (int) $pagination['page'] ? 'panel-button' : 'panel-button-secondary' ?>">
+              <?= esc((string) $pageNumber) ?>
+            </a>
+          <?php endfor; ?>
+
+          <a href="<?= site_url('members' . ($pagination['page'] < $pagination['total_pages'] ? '?' . http_build_query($pageQueryBase + ['page' => $nextPage]) : '?' . http_build_query($pageQueryBase + ['page' => $pagination['page']]))) ?>" class="panel-button-secondary <?= $pagination['page'] >= $pagination['total_pages'] ? 'pointer-events-none opacity-50' : '' ?>">Berikutnya</a>
+        </div>
+      </div>
+    </div>
+  <?php endif; ?>
 <?php endif; ?>
 <?= $this->endSection() ?>
 

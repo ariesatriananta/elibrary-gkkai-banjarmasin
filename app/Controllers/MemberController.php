@@ -8,6 +8,7 @@ use CodeIgniter\HTTP\RedirectResponse;
 
 class MemberController extends BaseController
 {
+    private const INDEX_PER_PAGE = 15;
     private const HISTORY_PER_PAGE = 10;
 
     private MemberModel $memberModel;
@@ -23,47 +24,17 @@ class MemberController extends BaseController
     {
         service('libraryService')->syncStatuses();
 
-        $filters = [
-            'q' => trim((string) $this->request->getGet('q')),
-            'status' => trim((string) $this->request->getGet('status')),
-        ];
-
-        $members = $this->fetchMembers();
-        $members = array_values(array_filter($members, function (array $member) use ($filters): bool {
-            if ($filters['status'] === 'active' && (int) $member['is_active'] !== 1) {
-                return false;
-            }
-
-            if ($filters['status'] === 'inactive' && (int) $member['is_active'] !== 0) {
-                return false;
-            }
-
-            if ($filters['q'] === '') {
-                return true;
-            }
-
-            $haystack = mb_strtolower(implode(' ', [
-                $member['member_number'],
-                $member['full_name'],
-                $member['phone'],
-                $member['email'],
-                $member['address'],
-            ]));
-
-            return str_contains($haystack, mb_strtolower($filters['q']));
-        }));
+        $filters = $this->indexFilters();
+        $pagination = $this->indexPaginationState($filters);
+        $members = $this->fetchMembers($filters, $pagination['per_page'], $pagination['page']);
 
         return view('members/index', [
             'pageTitle' => 'Data Anggota',
             'activeMenu' => 'members',
             'members' => $members,
             'filters' => $filters,
-            'summary' => [
-                'total' => count($members),
-                'active' => count(array_filter($members, fn (array $member): bool => (int) $member['is_active'] === 1)),
-                'inactive' => count(array_filter($members, fn (array $member): bool => (int) $member['is_active'] === 0)),
-                'loans' => array_sum(array_map(fn (array $member): int => (int) $member['active_loans'], $members)),
-            ],
+            'pagination' => $pagination,
+            'summary' => $pagination['summary'],
         ]);
     }
 
@@ -164,10 +135,61 @@ class MemberController extends BaseController
         return redirect()->to(site_url('members'))->with('success', 'Anggota berhasil dihapus.');
     }
 
-    private function fetchMembers(): array
+    private function indexFilters(): array
     {
-        $sql = "
-            SELECT
+        $status = trim((string) $this->request->getGet('status'));
+
+        return [
+            'q' => trim((string) $this->request->getGet('q')),
+            'status' => in_array($status, ['active', 'inactive'], true) ? $status : '',
+        ];
+    }
+
+    private function indexPaginationState(array $filters): array
+    {
+        $summaryRow = $this->memberBaseBuilder($filters)
+            ->select("
+                COUNT(*) AS total_rows,
+                COALESCE(SUM(CASE WHEN m.is_active = 1 THEN 1 ELSE 0 END), 0) AS active_count,
+                COALESCE(SUM(CASE WHEN m.is_active = 0 THEN 1 ELSE 0 END), 0) AS inactive_count,
+                COALESCE(SUM((
+                    SELECT COUNT(*)
+                    FROM loans l
+                    WHERE l.member_id = m.id
+                      AND l.status IN ('borrowed', 'overdue')
+                )), 0) AS active_loans_count
+            ", false)
+            ->get()
+            ->getRowArray() ?? [];
+
+        $totalRows = (int) ($summaryRow['total_rows'] ?? 0);
+        $perPage = self::INDEX_PER_PAGE;
+        $totalPages = max(1, (int) ceil($totalRows / $perPage));
+        $page = max(1, (int) $this->request->getGet('page'));
+        $page = min($page, $totalPages);
+        $from = $totalRows > 0 ? (($page - 1) * $perPage) + 1 : 0;
+        $to = $totalRows > 0 ? min($from + $perPage - 1, $totalRows) : 0;
+
+        return [
+            'page' => $page,
+            'per_page' => $perPage,
+            'total_rows' => $totalRows,
+            'total_pages' => $totalPages,
+            'from' => $from,
+            'to' => $to,
+            'summary' => [
+                'total' => $totalRows,
+                'active' => (int) ($summaryRow['active_count'] ?? 0),
+                'inactive' => (int) ($summaryRow['inactive_count'] ?? 0),
+                'loans' => (int) ($summaryRow['active_loans_count'] ?? 0),
+            ],
+        ];
+    }
+
+    private function fetchMembers(array $filters, int $perPage, int $page): array
+    {
+        $rows = $this->memberBaseBuilder($filters)
+            ->select("
                 m.*,
                 (
                     SELECT COUNT(*)
@@ -175,11 +197,12 @@ class MemberController extends BaseController
                     WHERE l.member_id = m.id
                       AND l.status IN ('borrowed', 'overdue')
                 ) AS active_loans
-            FROM members m
-            ORDER BY m.created_at DESC, m.id DESC
-        ";
-
-        $rows = db_connect()->query($sql)->getResultArray();
+            ", false)
+            ->orderBy('m.created_at', 'DESC')
+            ->orderBy('m.id', 'DESC')
+            ->limit($perPage, max(0, ($page - 1) * $perPage))
+            ->get()
+            ->getResultArray();
 
         return array_map(function (array $member): array {
             $member['active_loans'] = (int) ($member['active_loans'] ?? 0);
@@ -187,6 +210,32 @@ class MemberController extends BaseController
 
             return $member;
         }, $rows);
+    }
+
+    private function memberBaseBuilder(array $filters)
+    {
+        $builder = db_connect()->table('members m');
+
+        if ($filters['status'] === 'active') {
+            $builder->where('m.is_active', 1);
+        }
+
+        if ($filters['status'] === 'inactive') {
+            $builder->where('m.is_active', 0);
+        }
+
+        if ($filters['q'] !== '') {
+            $builder
+                ->groupStart()
+                ->like('m.member_number', $filters['q'])
+                ->orLike('m.full_name', $filters['q'])
+                ->orLike('m.phone', $filters['q'])
+                ->orLike('m.email', $filters['q'])
+                ->orLike('m.address', $filters['q'])
+                ->groupEnd();
+        }
+
+        return $builder;
     }
 
     private function memberHistoryPaginationState(int $memberId): array
