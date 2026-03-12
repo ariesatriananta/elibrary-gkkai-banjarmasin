@@ -357,6 +357,37 @@
     @apply panel-card p-4;
   }
 
+  .fines-filter-toolbar {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .fines-filter-search {
+    min-width: 0;
+  }
+
+  .fines-filter-field {
+    min-width: 0;
+  }
+
+  .fines-filter-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    .fines-filter-toolbar {
+      width: 100%;
+      align-items: end;
+      grid-template-columns: minmax(0, 1fr) 220px 220px auto;
+    }
+
+    .fines-filter-actions {
+      justify-content: flex-end;
+      white-space: nowrap;
+    }
+  }
+
   .empty-state {
     @apply panel-card px-8 py-10 text-center;
   }
@@ -401,6 +432,84 @@
 
   .metric-tile-value {
     @apply mt-2 text-lg font-semibold tracking-tight;
+  }
+
+  .books-card-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .books-card-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .books-card-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .books-card-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+
+  .book-card {
+    display: flex;
+    min-height: 100%;
+    flex-direction: column;
+  }
+
+  .book-card-cover {
+    height: 9rem;
+  }
+
+  .book-card-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.875rem;
+    padding: 1rem;
+  }
+
+  .book-card-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+
+  .book-card-action-button {
+    @apply inline-flex items-center justify-center rounded-xl text-sm font-medium transition-all;
+    width: 2.4rem;
+    height: 2.4rem;
+    border: 1px solid var(--button-secondary-border);
+    background: var(--button-secondary-bg);
+    color: var(--toggle-label);
+  }
+
+  .book-card-action-button:hover {
+    background: var(--button-secondary-bg-hover);
+    transform: translateY(-1px);
+  }
+
+  .book-card-action-button-danger {
+    border-color: rgba(239, 68, 68, 0.18);
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+  }
+
+  .book-card-action-button-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+  }
+
+  html[data-theme='dark'] .book-card-action-button-danger {
+    border-color: rgba(248, 113, 113, 0.2);
+    background: rgba(127, 29, 29, 0.42);
+    color: #fca5a5;
   }
 
   .soft-info {

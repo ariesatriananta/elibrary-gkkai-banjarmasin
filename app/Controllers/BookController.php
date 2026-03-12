@@ -12,6 +12,8 @@ use CodeIgniter\HTTP\RedirectResponse;
 
 class BookController extends BaseController
 {
+    private const PER_PAGE = 20;
+
     private BookModel $bookModel;
     private BookCopyModel $copyModel;
     private CategoryModel $categoryModel;
@@ -29,23 +31,19 @@ class BookController extends BaseController
 
     public function index(): string
     {
-        $filters = [
-            'q' => trim((string) $this->request->getGet('q')),
-            'category_id' => trim((string) $this->request->getGet('category_id')),
-            'age_classification_id' => trim((string) $this->request->getGet('age_classification_id')),
-            'stock_status' => trim((string) $this->request->getGet('stock_status')),
-        ];
-
-        $books = $this->filterBooks($this->fetchBooksForIndex(), $filters);
+        $filters = $this->filters();
+        $pagination = $this->paginationState($filters);
+        $books = $this->fetchBooksForIndex($filters, $pagination['per_page'], $pagination['page']);
 
         return view('books/index', [
             'pageTitle' => 'Data Buku',
             'activeMenu' => 'books',
             'books' => $books,
             'filters' => $filters,
+            'pagination' => $pagination,
             'categories' => $this->categoryModel->orderBy('sort_order', 'ASC')->findAll(),
             'ageClassifications' => $this->ageClassificationModel->orderBy('sort_order', 'ASC')->findAll(),
-            'summary' => $this->buildSummary($books),
+            'summary' => $pagination['summary'],
         ]);
     }
 
@@ -273,9 +271,21 @@ class BookController extends BaseController
         return redirect()->to(site_url('books/' . $bookId . '/edit'))->with('success', 'Copy buku berhasil dihapus.');
     }
 
-    private function fetchBooksForIndex(): array
+    private function filters(): array
     {
-        $sql = "
+        $stockStatus = trim((string) $this->request->getGet('stock_status'));
+
+        return [
+            'q' => trim((string) $this->request->getGet('q')),
+            'category_id' => trim((string) $this->request->getGet('category_id')),
+            'age_classification_id' => trim((string) $this->request->getGet('age_classification_id')),
+            'stock_status' => in_array($stockStatus, ['available', 'borrowed'], true) ? $stockStatus : '',
+        ];
+    }
+
+    private function booksBaseSql(): string
+    {
+        return "
             SELECT
                 b.*,
                 c.name AS category_name,
@@ -289,61 +299,103 @@ class BookController extends BaseController
             FROM books b
             LEFT JOIN categories c ON c.id = b.category_id
             LEFT JOIN age_classifications ac ON ac.id = b.age_classification_id
-            ORDER BY b.created_at DESC, b.id DESC
+        ";
+    }
+
+    private function paginationState(array $filters): array
+    {
+        [$filteredSql, $bindings] = $this->filteredBooksSql($filters);
+
+        $summarySql = "
+            SELECT
+                COUNT(*) AS titles,
+                COALESCE(SUM(total_copies), 0) AS copies,
+                COALESCE(SUM(available_copies), 0) AS available,
+                COALESCE(SUM(borrowed_copies), 0) AS borrowed
+            FROM ({$filteredSql}) filtered_books
         ";
 
-        $rows = db_connect()->query($sql)->getResultArray();
+        $summaryRow = db_connect()->query($summarySql, $bindings)->getRowArray() ?? [];
+        $totalRows = (int) ($summaryRow['titles'] ?? 0);
+        $perPage = self::PER_PAGE;
+        $totalPages = max(1, (int) ceil($totalRows / $perPage));
+        $page = max(1, (int) $this->request->getGet('page'));
+        $page = min($page, $totalPages);
+        $from = $totalRows > 0 ? (($page - 1) * $perPage) + 1 : 0;
+        $to = $totalRows > 0 ? min($from + $perPage - 1, $totalRows) : 0;
+
+        return [
+            'page' => $page,
+            'per_page' => $perPage,
+            'total_rows' => $totalRows,
+            'total_pages' => $totalPages,
+            'from' => $from,
+            'to' => $to,
+            'summary' => [
+                'titles' => $totalRows,
+                'copies' => (int) ($summaryRow['copies'] ?? 0),
+                'available' => (int) ($summaryRow['available'] ?? 0),
+                'borrowed' => (int) ($summaryRow['borrowed'] ?? 0),
+            ],
+        ];
+    }
+
+    private function fetchBooksForIndex(array $filters, int $perPage, int $page): array
+    {
+        [$filteredSql, $bindings] = $this->filteredBooksSql($filters);
+
+        $sql = "
+            SELECT *
+            FROM ({$filteredSql}) filtered_books
+            ORDER BY created_at DESC, id DESC
+            LIMIT {$perPage} OFFSET " . max(0, ($page - 1) * $perPage);
+
+        $rows = db_connect()->query($sql, $bindings)->getResultArray();
 
         return array_map(fn (array $row): array => $this->decorateBookRow($row), $rows);
     }
 
-    private function filterBooks(array $books, array $filters): array
+    private function filteredBooksSql(array $filters): array
     {
-        return array_values(array_filter($books, function (array $book) use ($filters): bool {
-            if ($filters['category_id'] !== '' && (int) $book['category_id'] !== (int) $filters['category_id']) {
-                return false;
-            }
+        $sql = "SELECT * FROM (" . $this->booksBaseSql() . ") filtered_books WHERE 1=1";
+        $bindings = [];
 
-            if ($filters['age_classification_id'] !== '' && (int) $book['age_classification_id'] !== (int) $filters['age_classification_id']) {
-                return false;
-            }
+        if ($filters['category_id'] !== '') {
+            $sql .= " AND category_id = ?";
+            $bindings[] = (int) $filters['category_id'];
+        }
 
-            if ($filters['stock_status'] === 'available' && (int) $book['available_copies'] < 1) {
-                return false;
-            }
+        if ($filters['age_classification_id'] !== '') {
+            $sql .= " AND age_classification_id = ?";
+            $bindings[] = (int) $filters['age_classification_id'];
+        }
 
-            if ($filters['stock_status'] === 'borrowed' && ((int) $book['available_copies'] > 0 || (int) $book['total_copies'] === 0)) {
-                return false;
-            }
+        if ($filters['stock_status'] === 'available') {
+            $sql .= " AND available_copies >= 1";
+        }
 
-            if ($filters['q'] === '') {
-                return true;
-            }
+        if ($filters['stock_status'] === 'borrowed') {
+            $sql .= " AND available_copies = 0 AND total_copies > 0";
+        }
 
-            $haystack = mb_strtolower(implode(' ', [
-                $book['title'] ?? '',
-                $book['author'] ?? '',
-                $book['publisher'] ?? '',
-                $book['isbn'] ?? '',
-                $book['category_name'] ?? '',
-                $book['age_classification_name'] ?? '',
-                $book['copy_codes'] ?? '',
-                $book['legacy_codes'] ?? '',
-                $book['barcode_values'] ?? '',
-            ]));
+        if ($filters['q'] !== '') {
+            $sql .= "
+                AND LOWER(CONCAT_WS(' ',
+                    COALESCE(title, ''),
+                    COALESCE(author, ''),
+                    COALESCE(publisher, ''),
+                    COALESCE(isbn, ''),
+                    COALESCE(category_name, ''),
+                    COALESCE(age_classification_name, ''),
+                    COALESCE(copy_codes, ''),
+                    COALESCE(legacy_codes, ''),
+                    COALESCE(barcode_values, '')
+                )) LIKE ?
+            ";
+            $bindings[] = '%' . mb_strtolower($filters['q']) . '%';
+        }
 
-            return str_contains($haystack, mb_strtolower($filters['q']));
-        }));
-    }
-
-    private function buildSummary(array $books): array
-    {
-        return [
-            'titles' => count($books),
-            'copies' => array_sum(array_map(fn (array $book): int => (int) $book['total_copies'], $books)),
-            'available' => array_sum(array_map(fn (array $book): int => (int) $book['available_copies'], $books)),
-            'borrowed' => array_sum(array_map(fn (array $book): int => (int) $book['borrowed_copies'], $books)),
-        ];
+        return [$sql, $bindings];
     }
 
     private function decorateBookRow(array $row): array

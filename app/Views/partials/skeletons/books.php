@@ -23,21 +23,28 @@
     </div>
   </div>
 </div>
-<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-  <?php for ($i = 0; $i < 6; $i++): ?>
+<div class="books-card-grid">
+  <?php for ($i = 0; $i < 10; $i++): ?>
     <div class="page-loading-skeleton-panel overflow-hidden">
-      <div class="page-skeleton-block h-40 rounded-none"></div>
+      <div class="page-skeleton-block h-36 rounded-none"></div>
       <div class="page-loading-skeleton-inner space-y-4">
         <div class="space-y-2">
           <div class="page-skeleton-line h-5 w-3/4"></div>
           <div class="page-skeleton-line h-4 w-1/2"></div>
         </div>
         <div class="grid grid-cols-3 gap-3">
-          <div class="page-skeleton-block h-16 rounded-2xl"></div>
-          <div class="page-skeleton-block h-16 rounded-2xl"></div>
-          <div class="page-skeleton-block h-16 rounded-2xl"></div>
+          <div class="page-skeleton-block h-14 rounded-2xl"></div>
+          <div class="page-skeleton-block h-14 rounded-2xl"></div>
+          <div class="page-skeleton-block h-14 rounded-2xl"></div>
         </div>
-        <div class="page-skeleton-block h-10 rounded-2xl"></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="page-skeleton-line h-4 rounded-xl"></div>
+          <div class="page-skeleton-line h-4 rounded-xl"></div>
+        </div>
+        <div class="flex justify-end gap-2">
+          <div class="page-skeleton-block h-10 w-10 rounded-xl"></div>
+          <div class="page-skeleton-block h-10 w-10 rounded-xl"></div>
+        </div>
       </div>
     </div>
   <?php endfor; ?>

@@ -103,8 +103,8 @@ $pageQueryBase = array_filter([
 </div>
 
 <form method="get" action="<?= site_url('fines') ?>" class="content-toolbar">
-  <div class="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,220px)_minmax(0,220px)_auto] xl:items-end">
-    <div class="relative">
+  <div class="fines-filter-toolbar">
+    <div class="relative min-w-0 fines-filter-search">
       <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <circle cx="11" cy="11" r="8"></circle>
         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -112,14 +112,17 @@ $pageQueryBase = array_filter([
       <input type="text" name="q" value="<?= esc($filters['q']) ?>" placeholder="Cari anggota, judul buku, atau kode copy..." class="panel-input pl-9">
     </div>
 
-    <select name="type" class="panel-input">
+    <div class="fines-filter-field">
+      <select name="type" class="panel-input">
       <option value="">Semua Jenis</option>
       <option value="late" <?= $filters['type'] === 'late' ? 'selected' : '' ?>>Keterlambatan</option>
       <option value="damage" <?= $filters['type'] === 'damage' ? 'selected' : '' ?>>Kerusakan Buku</option>
       <option value="lost" <?= $filters['type'] === 'lost' ? 'selected' : '' ?>>Kehilangan Buku</option>
-    </select>
+      </select>
+    </div>
 
-    <select name="status" class="panel-input">
+    <div class="fines-filter-field">
+      <select name="status" class="panel-input">
       <option value="">Semua Status</option>
       <option value="active" <?= $filters['status'] === 'active' ? 'selected' : '' ?>>Kasus Aktif</option>
       <option value="unpaid" <?= $filters['status'] === 'unpaid' ? 'selected' : '' ?>>Belum Lunas</option>
@@ -127,9 +130,10 @@ $pageQueryBase = array_filter([
       <option value="paid" <?= $filters['status'] === 'paid' ? 'selected' : '' ?>>Lunas</option>
       <option value="open" <?= $filters['status'] === 'open' ? 'selected' : '' ?>>Menunggu Penggantian</option>
       <option value="resolved" <?= $filters['status'] === 'resolved' ? 'selected' : '' ?>>Selesai</option>
-    </select>
+      </select>
+    </div>
 
-    <div class="flex gap-2 xl:flex-nowrap xl:justify-end">
+    <div class="fines-filter-actions">
       <button type="submit" class="panel-button justify-center">Filter</button>
       <a href="<?= site_url('fines') ?>" class="panel-button-secondary justify-center">Reset</a>
     </div>

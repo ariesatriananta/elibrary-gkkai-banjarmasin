@@ -1,6 +1,15 @@
 <?= $this->extend('layouts/admin') ?>
 
 <?= $this->section('content') ?>
+<?php
+$pagination = $pagination ?? ['page' => 1, 'total_pages' => 1, 'total_rows' => 0, 'from' => 0, 'to' => 0];
+$pageQueryBase = array_filter([
+    'q' => $filters['q'] ?? '',
+    'category_id' => $filters['category_id'] ?? '',
+    'age_classification_id' => $filters['age_classification_id'] ?? '',
+    'stock_status' => $filters['stock_status'] ?? '',
+], static fn ($value): bool => $value !== '' && $value !== null);
+?>
 <div class="page-header">
   <div>
     <h1 class="page-title">Data Buku</h1>
@@ -81,21 +90,28 @@
     <p class="empty-state-description">Coba ubah filter pencarian atau tambahkan buku baru.</p>
   </div>
 <?php else: ?>
-  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+  <div class="flex flex-col gap-2 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+    <p>Menampilkan <?= esc((string) $pagination['from']) ?>-<?= esc((string) $pagination['to']) ?> dari <?= esc((string) $pagination['total_rows']) ?> judul buku.</p>
+    <?php if ($filters['q'] !== '' || $filters['category_id'] !== '' || $filters['age_classification_id'] !== '' || $filters['stock_status'] !== ''): ?>
+      <p>Filter aktif pada hasil buku.</p>
+    <?php endif; ?>
+  </div>
+
+  <div class="books-card-grid">
     <?php foreach ($books as $book): ?>
-      <div class="panel-card overflow-hidden">
-        <div class="flex h-40 items-center justify-center bg-gradient-to-br <?= esc($book['cover_class']) ?>">
+      <div class="panel-card book-card overflow-hidden">
+        <div class="book-card-cover flex items-center justify-center bg-gradient-to-br <?= esc($book['cover_class']) ?>">
           <?php if (! empty($book['cover_path'])): ?>
             <img src="<?= base_url($book['cover_path']) ?>" alt="<?= esc($book['title']) ?>" class="h-full w-full object-cover">
           <?php else: ?>
-            <span class="px-5 text-center text-lg font-bold leading-tight text-white drop-shadow"><?= esc($book['title']) ?></span>
+            <span class="px-4 text-center text-base font-bold leading-tight text-white drop-shadow"><?= esc($book['title']) ?></span>
           <?php endif; ?>
         </div>
 
-        <div class="space-y-4 p-4">
+        <div class="book-card-body">
           <div class="space-y-1">
-            <h2 class="line-clamp-2 text-lg font-semibold"><?= esc($book['title']) ?></h2>
-            <p class="text-sm text-slate-500"><?= esc($book['author']) ?></p>
+            <h2 class="line-clamp-2 text-base font-semibold leading-snug"><?= esc($book['title']) ?></h2>
+            <p class="line-clamp-1 text-sm text-slate-500"><?= esc($book['author']) ?></p>
           </div>
 
           <div class="flex flex-wrap gap-2">
@@ -112,43 +128,48 @@
             </span>
           </div>
 
-          <div class="grid grid-cols-3 gap-3 text-center">
-            <div>
-              <div class="metric-tile">
-                <p class="text-xs text-slate-500">Copy</p>
-                <p class="mt-2 text-lg font-semibold"><?= esc((string) $book['total_copies']) ?></p>
-              </div>
+          <div class="book-card-stats">
+            <div class="metric-tile text-center">
+              <p class="text-[11px] text-slate-500">Copy</p>
+              <p class="mt-1.5 text-base font-semibold"><?= esc((string) $book['total_copies']) ?></p>
             </div>
-            <div>
-              <div class="metric-tile">
-                <p class="text-xs text-slate-500">Tersedia</p>
-                <p class="mt-2 text-lg font-semibold text-success"><?= esc((string) $book['available_copies']) ?></p>
-              </div>
+            <div class="metric-tile text-center">
+              <p class="text-[11px] text-slate-500">Tersedia</p>
+              <p class="mt-1.5 text-base font-semibold text-success"><?= esc((string) $book['available_copies']) ?></p>
             </div>
-            <div>
-              <div class="metric-tile">
-                <p class="text-xs text-slate-500">Dipinjam</p>
-                <p class="mt-2 text-lg font-semibold text-primary"><?= esc((string) $book['borrowed_copies']) ?></p>
-              </div>
+            <div class="metric-tile text-center">
+              <p class="text-[11px] text-slate-500">Dipinjam</p>
+              <p class="mt-1.5 text-base font-semibold text-primary"><?= esc((string) $book['borrowed_copies']) ?></p>
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3 text-sm">
             <div>
               <p class="text-xs uppercase tracking-wide text-slate-400">ISBN</p>
-              <p class="mt-1 line-clamp-1"><?= esc($book['isbn'] ?: '-') ?></p>
+              <p class="mt-1 line-clamp-1 text-sm"><?= esc($book['isbn'] ?: '-') ?></p>
             </div>
             <div>
               <p class="text-xs uppercase tracking-wide text-slate-400">Rak</p>
-              <p class="mt-1 line-clamp-1"><?= esc($book['shelf_location'] ?: '-') ?></p>
+              <p class="mt-1 line-clamp-1 text-sm"><?= esc($book['shelf_location'] ?: '-') ?></p>
             </div>
           </div>
 
-          <div class="flex gap-2">
-            <a href="<?= site_url('books/' . $book['id'] . '/edit') ?>" class="panel-button-secondary flex-1 justify-center">Kelola</a>
-            <form method="post" action="<?= site_url('books/' . $book['id'] . '/delete') ?>" class="flex-1" onsubmit="return confirm('Hapus buku ini? Semua copy tanpa histori transaksi juga akan ikut terhapus.');">
-              <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-white hover:opacity-90">
-                Hapus
+          <div class="flex items-center justify-end gap-2">
+            <a href="<?= site_url('books/' . $book['id'] . '/edit') ?>" class="book-card-action-button" title="Kelola buku" aria-label="Kelola buku <?= esc($book['title']) ?>">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </a>
+            <form method="post" action="<?= site_url('books/' . $book['id'] . '/delete') ?>" onsubmit="return confirm('Hapus buku ini? Semua copy tanpa histori transaksi juga akan ikut terhapus.');">
+              <button type="submit" class="book-card-action-button book-card-action-button-danger" title="Hapus buku" aria-label="Hapus buku <?= esc($book['title']) ?>">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6l-1 14H6L5 6"></path>
+                  <path d="M10 11v6"></path>
+                  <path d="M14 11v6"></path>
+                  <path d="M9 6V4h6v2"></path>
+                </svg>
               </button>
             </form>
           </div>
@@ -156,6 +177,34 @@
       </div>
     <?php endforeach; ?>
   </div>
+
+  <?php if (($pagination['total_pages'] ?? 1) > 1): ?>
+    <div class="content-toolbar">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-sm text-slate-500">Halaman <?= esc((string) $pagination['page']) ?> dari <?= esc((string) $pagination['total_pages']) ?></p>
+        <div class="flex flex-wrap gap-2">
+          <?php
+          $prevPage = max(1, (int) $pagination['page'] - 1);
+          $nextPage = min((int) $pagination['total_pages'], (int) $pagination['page'] + 1);
+          $startPage = max(1, (int) $pagination['page'] - 2);
+          $endPage = min((int) $pagination['total_pages'], $startPage + 4);
+          $startPage = max(1, $endPage - 4);
+          ?>
+
+          <a href="<?= site_url('books' . ($pagination['page'] > 1 ? '?' . http_build_query($pageQueryBase + ['page' => $prevPage]) : (empty($pageQueryBase) ? '' : '?' . http_build_query($pageQueryBase)))) ?>" class="panel-button-secondary <?= $pagination['page'] <= 1 ? 'pointer-events-none opacity-50' : '' ?>">Sebelumnya</a>
+
+          <?php for ($pageNumber = $startPage; $pageNumber <= $endPage; $pageNumber++): ?>
+            <?php $pageUrl = site_url('books' . '?' . http_build_query($pageQueryBase + ['page' => $pageNumber])); ?>
+            <a href="<?= $pageUrl ?>" class="<?= $pageNumber === (int) $pagination['page'] ? 'panel-button' : 'panel-button-secondary' ?>">
+              <?= esc((string) $pageNumber) ?>
+            </a>
+          <?php endfor; ?>
+
+          <a href="<?= site_url('books' . ($pagination['page'] < $pagination['total_pages'] ? '?' . http_build_query($pageQueryBase + ['page' => $nextPage]) : '?' . http_build_query($pageQueryBase + ['page' => $pagination['page']]))) ?>" class="panel-button-secondary <?= $pagination['page'] >= $pagination['total_pages'] ? 'pointer-events-none opacity-50' : '' ?>">Berikutnya</a>
+        </div>
+      </div>
+    </div>
+  <?php endif; ?>
 <?php endif; ?>
 <?= $this->endSection() ?>
 
