@@ -4,11 +4,16 @@
 <?php
 $errors = $errors ?? [];
 $activeTab = $activeTab ?? 'history';
+$historyPagination = $historyPagination ?? ['page' => 1, 'total_pages' => 1, 'total_rows' => 0, 'from' => 0, 'to' => 0];
 $fineRules = $fineRules ?? [
   'late_fine_per_week' => 5000,
   'late_grace_days' => 3,
   'damage_fine_amount' => 100000,
 ];
+$historyPageQueryBase = array_filter([
+  'q' => $filters['q'] ?? '',
+  'status' => $filters['status'] ?? '',
+], static fn ($value): bool => $value !== '' && $value !== null);
 ?>
 <div class="page-header">
   <div>
@@ -34,7 +39,7 @@ $fineRules = $fineRules ?? [
       <form method="post" action="<?= site_url('transactions/borrow') ?>" class="grid max-w-3xl grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label class="mb-1 block text-sm font-medium">Anggota</label>
-          <select name="member_id" class="panel-input <?= field_error_class($errors, 'member_id') ?>" required>
+          <select name="member_id" class="panel-input borrow-select2 <?= field_error_class($errors, 'member_id') ?>" data-placeholder="Cari anggota..." required>
             <option value="">Pilih anggota</option>
             <?php foreach ($members as $member): ?>
               <option value="<?= esc((string) $member['id']) ?>" <?= old('member_id') === (string) $member['id'] ? 'selected' : '' ?>>
@@ -48,7 +53,7 @@ $fineRules = $fineRules ?? [
         </div>
         <div>
           <label class="mb-1 block text-sm font-medium">Copy Buku</label>
-          <select name="book_copy_id" class="panel-input <?= field_error_class($errors, 'book_copy_id') ?>" required>
+          <select name="book_copy_id" class="panel-input borrow-select2 <?= field_error_class($errors, 'book_copy_id') ?>" data-placeholder="Cari copy buku..." required>
             <option value="">Pilih copy buku</option>
             <?php foreach ($availableCopies as $copy): ?>
               <option value="<?= esc((string) $copy['id']) ?>" <?= old('book_copy_id') === (string) $copy['id'] ? 'selected' : '' ?>>
@@ -98,7 +103,7 @@ $fineRules = $fineRules ?? [
       <form method="post" action="<?= site_url('transactions/return') ?>" class="grid max-w-3xl grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label class="mb-1 block text-sm font-medium">Pinjaman Aktif</label>
-          <select name="loan_id" class="panel-input <?= field_error_class($errors, 'loan_id') ?>" required>
+          <select name="loan_id" class="panel-input borrow-select2 <?= field_error_class($errors, 'loan_id') ?>" data-placeholder="Cari pinjaman aktif..." required>
             <option value="">Pilih pinjaman aktif</option>
             <?php foreach ($activeLoans as $loan): ?>
               <option value="<?= esc((string) $loan['id']) ?>" <?= old('loan_id') === (string) $loan['id'] ? 'selected' : '' ?>>
@@ -197,6 +202,15 @@ $fineRules = $fineRules ?? [
     </div>
   </form>
 
+  <?php if ($history !== []): ?>
+    <div class="mb-4 flex flex-col gap-2 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+      <p>Menampilkan <?= esc((string) $historyPagination['from']) ?>-<?= esc((string) $historyPagination['to']) ?> dari <?= esc((string) $historyPagination['total_rows']) ?> transaksi.</p>
+      <?php if (($filters['q'] ?? '') !== '' || ($filters['status'] ?? '') !== ''): ?>
+        <p>Filter aktif pada riwayat transaksi.</p>
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
+
   <div class="data-table-wrapper">
     <div class="overflow-x-auto">
       <table class="data-table">
@@ -254,6 +268,34 @@ $fineRules = $fineRules ?? [
       </table>
     </div>
   </div>
+
+  <?php if (($historyPagination['total_pages'] ?? 1) > 1): ?>
+    <div class="content-toolbar mt-4">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-sm text-slate-500">Halaman <?= esc((string) $historyPagination['page']) ?> dari <?= esc((string) $historyPagination['total_pages']) ?></p>
+        <div class="flex flex-wrap gap-2">
+          <?php
+          $prevPage = max(1, (int) $historyPagination['page'] - 1);
+          $nextPage = min((int) $historyPagination['total_pages'], (int) $historyPagination['page'] + 1);
+          $startPage = max(1, (int) $historyPagination['page'] - 2);
+          $endPage = min((int) $historyPagination['total_pages'], $startPage + 4);
+          $startPage = max(1, $endPage - 4);
+          ?>
+
+          <a href="<?= site_url('transactions' . ($historyPagination['page'] > 1 ? '?' . http_build_query($historyPageQueryBase + ['history_page' => $prevPage]) : (empty($historyPageQueryBase) ? '' : '?' . http_build_query($historyPageQueryBase)))) ?>" class="panel-button-secondary <?= $historyPagination['page'] <= 1 ? 'pointer-events-none opacity-50' : '' ?>">Sebelumnya</a>
+
+          <?php for ($pageNumber = $startPage; $pageNumber <= $endPage; $pageNumber++): ?>
+            <?php $pageUrl = site_url('transactions' . '?' . http_build_query($historyPageQueryBase + ['history_page' => $pageNumber])); ?>
+            <a href="<?= $pageUrl ?>" class="<?= $pageNumber === (int) $historyPagination['page'] ? 'panel-button' : 'panel-button-secondary' ?>">
+              <?= esc((string) $pageNumber) ?>
+            </a>
+          <?php endfor; ?>
+
+          <a href="<?= site_url('transactions' . ($historyPagination['page'] < $historyPagination['total_pages'] ? '?' . http_build_query($historyPageQueryBase + ['history_page' => $nextPage]) : '?' . http_build_query($historyPageQueryBase + ['history_page' => $historyPagination['page']]))) ?>" class="panel-button-secondary <?= $historyPagination['page'] >= $historyPagination['total_pages'] ? 'pointer-events-none opacity-50' : '' ?>">Berikutnya</a>
+        </div>
+      </div>
+    </div>
+  <?php endif; ?>
 </div>
 <?= $this->endSection() ?>
 
@@ -261,7 +303,71 @@ $fineRules = $fineRules ?? [
 <?= $this->include('partials/skeletons/transactions') ?>
 <?= $this->endSection() ?>
 
+<?= $this->section('styles') ?>
+<link rel="stylesheet" href="<?= base_url('assets/vendor/select2/select2.min.css') ?>">
+<?= $this->endSection() ?>
+
 <?= $this->section('scripts') ?>
+<script>
+  (() => {
+    const initializeBorrowSelect2 = () => {
+      if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.select2 === 'undefined') {
+        return;
+      }
+
+      const $ = window.jQuery;
+
+      $('.borrow-select2').each(function initializeSelect() {
+        const $select = $(this);
+
+        if ($select.data('select2')) {
+          $select.select2('destroy');
+        }
+
+        $select.select2({
+          width: '100%',
+          placeholder: $select.data('placeholder') || 'Pilih data',
+          allowClear: false,
+          dropdownAutoWidth: true,
+          selectionCssClass: 'app-select2-selection',
+          dropdownCssClass: 'app-select2-dropdown',
+        });
+      });
+    };
+
+    const loadScript = (src) => new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src="${src}"]`);
+
+      if (existing) {
+        if (existing.dataset.loaded === 'true') {
+          resolve();
+          return;
+        }
+
+        existing.addEventListener('load', resolve, { once: true });
+        existing.addEventListener('error', reject, { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = false;
+      script.addEventListener('load', () => {
+        script.dataset.loaded = 'true';
+        resolve();
+      }, { once: true });
+      script.addEventListener('error', reject, { once: true });
+      document.body.appendChild(script);
+    });
+
+    window.__initializeBorrowSelect2 = initializeBorrowSelect2;
+    window.__loadBorrowSelect2Assets = async () => {
+      await loadScript('<?= base_url('assets/vendor/jquery/jquery.min.js') ?>');
+      await loadScript('<?= base_url('assets/vendor/select2/select2.min.js') ?>');
+      initializeBorrowSelect2();
+    };
+  })();
+</script>
 <script>
   const tabs = document.querySelectorAll('.transaction-tab');
   const panels = document.querySelectorAll('.transaction-panel');
@@ -435,5 +541,9 @@ $fineRules = $fineRules ?? [
 
   openTransactionTab(initialTab);
   updateReturnPreview();
+
+  window.__loadBorrowSelect2Assets?.().catch(() => {
+    // Fallback ke select biasa jika asset gagal dimuat.
+  });
 </script>
 <?= $this->endSection() ?>

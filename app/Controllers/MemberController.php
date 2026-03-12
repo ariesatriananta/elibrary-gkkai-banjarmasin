@@ -8,6 +8,8 @@ use CodeIgniter\HTTP\RedirectResponse;
 
 class MemberController extends BaseController
 {
+    private const HISTORY_PER_PAGE = 10;
+
     private MemberModel $memberModel;
     private LoanModel $loanModel;
 
@@ -107,12 +109,15 @@ class MemberController extends BaseController
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Anggota tidak ditemukan.');
         }
 
+        $historyPagination = $this->memberHistoryPaginationState($id);
+
         return view('members/form', [
             'pageTitle' => 'Edit Anggota',
             'activeMenu' => 'members',
             'mode' => 'edit',
             'member' => $member,
-            'history' => $this->memberHistory($id),
+            'history' => $this->memberHistory($id, $historyPagination['per_page'], $historyPagination['page']),
+            'historyPagination' => $historyPagination,
             'errors' => session('errors') ?? [],
         ]);
     }
@@ -184,8 +189,36 @@ class MemberController extends BaseController
         }, $rows);
     }
 
-    private function memberHistory(int $memberId): array
+    private function memberHistoryPaginationState(int $memberId): array
     {
+        $summaryRow = db_connect()->query("
+            SELECT COUNT(*) AS total_rows
+            FROM loans l
+            WHERE l.member_id = ?
+        ", [$memberId])->getRowArray() ?? [];
+
+        $totalRows = (int) ($summaryRow['total_rows'] ?? 0);
+        $perPage = self::HISTORY_PER_PAGE;
+        $totalPages = max(1, (int) ceil($totalRows / $perPage));
+        $page = max(1, (int) $this->request->getGet('history_page'));
+        $page = min($page, $totalPages);
+        $from = $totalRows > 0 ? (($page - 1) * $perPage) + 1 : 0;
+        $to = $totalRows > 0 ? min($from + $perPage - 1, $totalRows) : 0;
+
+        return [
+            'page' => $page,
+            'per_page' => $perPage,
+            'total_rows' => $totalRows,
+            'total_pages' => $totalPages,
+            'from' => $from,
+            'to' => $to,
+        ];
+    }
+
+    private function memberHistory(int $memberId, int $perPage, int $page): array
+    {
+        $offset = max(0, ($page - 1) * $perPage);
+
         $sql = "
             SELECT
                 l.id,
@@ -220,6 +253,7 @@ class MemberController extends BaseController
             INNER JOIN books b ON b.id = bc.book_id
             WHERE l.member_id = ?
             ORDER BY l.borrowed_at DESC, l.id DESC
+            LIMIT {$perPage} OFFSET {$offset}
         ";
 
         return db_connect()->query($sql, [$memberId])->getResultArray();

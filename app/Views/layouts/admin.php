@@ -12,6 +12,7 @@
   <link rel="apple-touch-icon" href="<?= library_logo_url() ?>">
   <link rel="manifest" href="<?= base_url('site.webmanifest') ?>">
   <?= $this->include('partials/theme_head') ?>
+  <?= $this->renderSection('styles') ?>
   <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
 </head>
 <?php $pageSkeleton = trim($this->renderSection('pageSkeleton')); ?>

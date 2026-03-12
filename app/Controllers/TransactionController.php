@@ -9,6 +9,8 @@ use CodeIgniter\HTTP\RedirectResponse;
 
 class TransactionController extends BaseController
 {
+    private const HISTORY_PER_PAGE = 15;
+
     private MemberModel $memberModel;
     private BookCopyModel $copyModel;
     private LoanModel $loanModel;
@@ -25,30 +27,9 @@ class TransactionController extends BaseController
         service('libraryService')->syncStatuses();
 
         $defaultLoanDays = service('libraryService')->getSettingNumber('loan_duration_days', 14);
-        $filters = [
-            'q' => trim((string) $this->request->getGet('q')),
-            'status' => trim((string) $this->request->getGet('status')),
-        ];
-
-        $history = $this->fetchHistory();
-        $history = array_values(array_filter($history, function (array $row) use ($filters): bool {
-            if ($filters['status'] !== '' && $row['status'] !== $filters['status']) {
-                return false;
-            }
-
-            if ($filters['q'] === '') {
-                return true;
-            }
-
-            $haystack = mb_strtolower(implode(' ', [
-                $row['book_title'],
-                $row['copy_code'],
-                $row['member_name'],
-                $row['member_number'],
-            ]));
-
-            return str_contains($haystack, mb_strtolower($filters['q']));
-        }));
+        $filters = $this->historyFilters();
+        $historyPagination = $this->historyPaginationState($filters);
+        $history = $this->fetchHistory($filters, $historyPagination['per_page'], $historyPagination['page']);
 
         $activeTab = session()->getFlashdata('transaction_tab');
 
@@ -64,6 +45,7 @@ class TransactionController extends BaseController
             'activeLoans' => $this->activeLoans(),
             'history' => $history,
             'filters' => $filters,
+            'historyPagination' => $historyPagination,
             'defaultBorrowDate' => date('Y-m-d'),
             'defaultDueDate' => date('Y-m-d', strtotime('+' . $defaultLoanDays . ' days')),
             'errors' => session('errors') ?? [],
@@ -218,10 +200,45 @@ class TransactionController extends BaseController
         return db_connect()->query($sql)->getResultArray();
     }
 
-    private function fetchHistory(): array
+    private function historyFilters(): array
     {
-        $sql = "
-            SELECT
+        $status = trim((string) $this->request->getGet('status'));
+
+        return [
+            'q' => trim((string) $this->request->getGet('q')),
+            'status' => in_array($status, ['borrowed', 'overdue', 'returned', 'lost'], true) ? $status : '',
+        ];
+    }
+
+    private function historyPaginationState(array $filters): array
+    {
+        $summaryRow = $this->historyBaseBuilder($filters)
+            ->select('COUNT(*) AS total_rows', false)
+            ->get()
+            ->getRowArray() ?? [];
+
+        $totalRows = (int) ($summaryRow['total_rows'] ?? 0);
+        $perPage = self::HISTORY_PER_PAGE;
+        $totalPages = max(1, (int) ceil($totalRows / $perPage));
+        $page = max(1, (int) $this->request->getGet('history_page'));
+        $page = min($page, $totalPages);
+        $from = $totalRows > 0 ? (($page - 1) * $perPage) + 1 : 0;
+        $to = $totalRows > 0 ? min($from + $perPage - 1, $totalRows) : 0;
+
+        return [
+            'page' => $page,
+            'per_page' => $perPage,
+            'total_rows' => $totalRows,
+            'total_pages' => $totalPages,
+            'from' => $from,
+            'to' => $to,
+        ];
+    }
+
+    private function fetchHistory(array $filters, int $perPage, int $page): array
+    {
+        return $this->historyBaseBuilder($filters)
+            ->select("
                 l.id,
                 l.borrowed_at,
                 l.due_at,
@@ -252,13 +269,37 @@ class TransactionController extends BaseController
                       AND f.fine_type = 'lost'
                       AND f.status = 'open'
                 ) AS open_replacement_count
-            FROM loans l
-            INNER JOIN book_copies bc ON bc.id = l.book_copy_id
-            INNER JOIN books b ON b.id = bc.book_id
-            INNER JOIN members m ON m.id = l.member_id
-            ORDER BY l.borrowed_at DESC, l.id DESC
-        ";
+            ", false)
+            ->orderBy('l.borrowed_at', 'DESC')
+            ->orderBy('l.id', 'DESC')
+            ->limit($perPage, max(0, ($page - 1) * $perPage))
+            ->get()
+            ->getResultArray();
+    }
 
-        return db_connect()->query($sql)->getResultArray();
+    private function historyBaseBuilder(array $filters)
+    {
+        $builder = db_connect()->table('loans l');
+
+        $builder
+            ->join('book_copies bc', 'bc.id = l.book_copy_id')
+            ->join('books b', 'b.id = bc.book_id')
+            ->join('members m', 'm.id = l.member_id');
+
+        if ($filters['status'] !== '') {
+            $builder->where('l.status', $filters['status']);
+        }
+
+        if ($filters['q'] !== '') {
+            $builder
+                ->groupStart()
+                ->like('b.title', $filters['q'])
+                ->orLike('bc.copy_code', $filters['q'])
+                ->orLike('m.full_name', $filters['q'])
+                ->orLike('m.member_number', $filters['q'])
+                ->groupEnd();
+        }
+
+        return $builder;
     }
 }

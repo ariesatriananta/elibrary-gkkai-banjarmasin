@@ -5,6 +5,7 @@
 $isEdit = $mode === 'edit';
 $memberId = $member['id'] ?? null;
 $errors = $errors ?? [];
+$historyPagination = $historyPagination ?? ['page' => 1, 'total_pages' => 1, 'total_rows' => 0, 'from' => 0, 'to' => 0];
 ?>
 
 <div class="page-header">
@@ -119,7 +120,7 @@ $errors = $errors ?? [];
         <?php if ($isEdit): ?>
           <div class="flex items-center justify-between">
             <span class="text-slate-500">Riwayat Transaksi</span>
-            <span class="font-medium"><?= esc((string) count($history)) ?></span>
+            <span class="font-medium"><?= esc((string) $historyPagination['total_rows']) ?></span>
           </div>
         <?php endif; ?>
       </div>
@@ -143,6 +144,12 @@ $errors = $errors ?? [];
       <h2 class="section-heading">Riwayat Peminjaman</h2>
       <p class="section-description">Daftar peminjaman yang pernah dilakukan anggota ini.</p>
     </div>
+
+    <?php if ($history !== []): ?>
+      <div class="mb-4 flex flex-col gap-2 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <p>Menampilkan <?= esc((string) $historyPagination['from']) ?>-<?= esc((string) $historyPagination['to']) ?> dari <?= esc((string) $historyPagination['total_rows']) ?> transaksi anggota ini.</p>
+      </div>
+    <?php endif; ?>
 
     <div class="data-table-wrapper overflow-x-auto">
       <table class="data-table">
@@ -193,6 +200,34 @@ $errors = $errors ?? [];
         </tbody>
       </table>
     </div>
+
+    <?php if (($historyPagination['total_pages'] ?? 1) > 1): ?>
+      <div class="mt-4 content-toolbar">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p class="text-sm text-slate-500">Halaman <?= esc((string) $historyPagination['page']) ?> dari <?= esc((string) $historyPagination['total_pages']) ?></p>
+          <div class="flex flex-wrap gap-2">
+            <?php
+            $prevPage = max(1, (int) $historyPagination['page'] - 1);
+            $nextPage = min((int) $historyPagination['total_pages'], (int) $historyPagination['page'] + 1);
+            $startPage = max(1, (int) $historyPagination['page'] - 2);
+            $endPage = min((int) $historyPagination['total_pages'], $startPage + 4);
+            $startPage = max(1, $endPage - 4);
+            ?>
+
+            <a href="<?= site_url('members/' . $memberId . '/edit' . ($historyPagination['page'] > 1 ? '?' . http_build_query(['history_page' => $prevPage]) : '')) ?>" class="panel-button-secondary <?= $historyPagination['page'] <= 1 ? 'pointer-events-none opacity-50' : '' ?>">Sebelumnya</a>
+
+            <?php for ($pageNumber = $startPage; $pageNumber <= $endPage; $pageNumber++): ?>
+              <?php $pageUrl = site_url('members/' . $memberId . '/edit' . '?' . http_build_query(['history_page' => $pageNumber])); ?>
+              <a href="<?= $pageUrl ?>" class="<?= $pageNumber === (int) $historyPagination['page'] ? 'panel-button' : 'panel-button-secondary' ?>">
+                <?= esc((string) $pageNumber) ?>
+              </a>
+            <?php endfor; ?>
+
+            <a href="<?= site_url('members/' . $memberId . '/edit' . '?' . http_build_query(['history_page' => $historyPagination['page'] < $historyPagination['total_pages'] ? $nextPage : $historyPagination['page']])) ?>" class="panel-button-secondary <?= $historyPagination['page'] >= $historyPagination['total_pages'] ? 'pointer-events-none opacity-50' : '' ?>">Berikutnya</a>
+          </div>
+        </div>
+      </div>
+    <?php endif; ?>
   </div>
 <?php endif; ?>
 <?= $this->endSection() ?>
