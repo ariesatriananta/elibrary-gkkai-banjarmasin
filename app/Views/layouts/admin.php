@@ -335,6 +335,10 @@
           return false;
         }
 
+        if (link.dataset.noLoading === 'true' || link.hasAttribute('download')) {
+          return false;
+        }
+
         return true;
       };
 

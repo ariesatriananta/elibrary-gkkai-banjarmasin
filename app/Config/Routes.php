@@ -13,6 +13,7 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('/', 'DashboardController::index');
     $routes->post('account/password', 'AuthController::changePassword');
     $routes->get('books', 'BookController::index');
+    $routes->get('books/export', 'BookController::export');
     $routes->get('books/create', 'BookController::create');
     $routes->post('books', 'BookController::store');
     $routes->get('books/(:num)/edit', 'BookController::edit/$1');

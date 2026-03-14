@@ -43,6 +43,39 @@ if (! function_exists('person_initials')) {
     }
 }
 
+if (! function_exists('text_initials')) {
+    function text_initials(?string $text, int $length = 2): string
+    {
+        $text = trim((string) $text);
+
+        if ($text === '') {
+            return str_repeat('-', max(1, $length));
+        }
+
+        $parts = preg_split('/\s+/', $text) ?: [];
+        $initials = '';
+
+        foreach ($parts as $part) {
+            if ($part === '') {
+                continue;
+            }
+
+            $initials .= mb_strtoupper(mb_substr($part, 0, 1));
+
+            if (mb_strlen($initials) >= $length) {
+                break;
+            }
+        }
+
+        if (mb_strlen($initials) < $length) {
+            $collapsed = preg_replace('/\s+/', '', $text) ?? $text;
+            $initials = mb_strtoupper(mb_substr($collapsed, 0, $length));
+        }
+
+        return $initials !== '' ? $initials : str_repeat('-', max(1, $length));
+    }
+}
+
 if (! function_exists('field_error')) {
     function field_error(array $errors, string $field): ?string
     {

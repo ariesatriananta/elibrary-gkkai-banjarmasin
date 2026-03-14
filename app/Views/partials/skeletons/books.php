@@ -23,29 +23,23 @@
     </div>
   </div>
 </div>
-<div class="books-card-grid">
-  <?php for ($i = 0; $i < 10; $i++): ?>
-    <div class="page-loading-skeleton-panel overflow-hidden">
-      <div class="page-skeleton-block h-36 rounded-none"></div>
-      <div class="page-loading-skeleton-inner space-y-4">
-        <div class="space-y-2">
-          <div class="page-skeleton-line h-5 w-3/4"></div>
-          <div class="page-skeleton-line h-4 w-1/2"></div>
-        </div>
-        <div class="grid grid-cols-3 gap-3">
-          <div class="page-skeleton-block h-14 rounded-2xl"></div>
-          <div class="page-skeleton-block h-14 rounded-2xl"></div>
-          <div class="page-skeleton-block h-14 rounded-2xl"></div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="page-skeleton-line h-4 rounded-xl"></div>
-          <div class="page-skeleton-line h-4 rounded-xl"></div>
-        </div>
-        <div class="flex justify-end gap-2">
-          <div class="page-skeleton-block h-10 w-10 rounded-xl"></div>
-          <div class="page-skeleton-block h-10 w-10 rounded-xl"></div>
-        </div>
-      </div>
+<div class="page-loading-skeleton-panel">
+  <div class="page-loading-skeleton-inner space-y-4">
+    <div class="grid grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_0.6fr_0.8fr_0.5fr] gap-3">
+      <?php for ($i = 0; $i < 7; $i++): ?>
+        <div class="page-skeleton-block h-11 rounded-2xl"></div>
+      <?php endfor; ?>
     </div>
-  <?php endfor; ?>
+    <?php for ($i = 0; $i < 6; $i++): ?>
+      <div class="grid grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_0.6fr_0.8fr_0.5fr] gap-3">
+        <div class="page-skeleton-block h-16 rounded-2xl"></div>
+        <div class="page-skeleton-block h-16 rounded-2xl"></div>
+        <div class="page-skeleton-block h-16 rounded-2xl"></div>
+        <div class="page-skeleton-block h-16 rounded-2xl"></div>
+        <div class="page-skeleton-block h-16 rounded-2xl"></div>
+        <div class="page-skeleton-block h-16 rounded-2xl"></div>
+        <div class="page-skeleton-block h-16 rounded-2xl"></div>
+      </div>
+    <?php endfor; ?>
+  </div>
 </div>

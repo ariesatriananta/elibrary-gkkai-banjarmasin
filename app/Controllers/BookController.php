@@ -9,6 +9,9 @@ use App\Models\CategoryModel;
 use App\Models\LoanModel;
 use CodeIgniter\Database\Exceptions\DatabaseException;
 use CodeIgniter\HTTP\RedirectResponse;
+use CodeIgniter\HTTP\ResponseInterface;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class BookController extends BaseController
 {
@@ -60,6 +63,82 @@ class BookController extends BaseController
             'copyStatuses' => $this->copyStatuses(),
             'errors' => session('errors') ?? [],
         ]);
+    }
+
+    public function export(): ResponseInterface
+    {
+        $filters = $this->filters();
+        $books = $this->fetchBooksForExport($filters);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Master Buku');
+
+        $headers = [
+            'No',
+            'Judul Buku',
+            'Pengarang',
+            'Kategori',
+            'Klasifikasi Usia',
+            'Penerbit',
+            'Tahun Terbit',
+            'ISBN',
+            'Lokasi Rak',
+            'Total Copy',
+            'Copy Tersedia',
+            'Copy Dipinjam',
+            'Status',
+        ];
+
+        $sheet->fromArray($headers, null, 'A1');
+
+        $rowNumber = 2;
+
+        foreach ($books as $index => $book) {
+            $sheet->fromArray([
+                $index + 1,
+                $book['title'],
+                $book['author'],
+                $book['category_name'] ?: '-',
+                $book['age_classification_name'] ?: '-',
+                $book['publisher'] ?: '-',
+                $book['publication_year'] ?: '-',
+                $book['isbn'] ?: '-',
+                $book['shelf_location'] ?: '-',
+                (int) $book['total_copies'],
+                (int) $book['available_copies'],
+                (int) $book['borrowed_copies'],
+                $book['stock_status_label'],
+            ], null, 'A' . $rowNumber);
+
+            $rowNumber++;
+        }
+
+        $lastColumn = chr(ord('A') + count($headers) - 1);
+        $sheet->getStyle('A1:' . $lastColumn . '1')->getFont()->setBold(true);
+        $sheet->freezePane('A2');
+
+        foreach (range('A', $lastColumn) as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+
+        ob_start();
+        $writer->save('php://output');
+        $content = (string) ob_get_clean();
+
+        $spreadsheet->disconnectWorksheets();
+        unset($spreadsheet);
+
+        $filename = 'master-buku-' . date('Y-m-d-His') . '.xlsx';
+
+        return $this->response
+            ->setStatusCode(200)
+            ->setContentType('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setHeader('Cache-Control', 'max-age=0')
+            ->setBody($content);
     }
 
     public function store(): RedirectResponse
@@ -349,6 +428,21 @@ class BookController extends BaseController
             FROM ({$filteredSql}) filtered_books
             ORDER BY created_at DESC, id DESC
             LIMIT {$perPage} OFFSET " . max(0, ($page - 1) * $perPage);
+
+        $rows = db_connect()->query($sql, $bindings)->getResultArray();
+
+        return array_map(fn (array $row): array => $this->decorateBookRow($row), $rows);
+    }
+
+    private function fetchBooksForExport(array $filters): array
+    {
+        [$filteredSql, $bindings] = $this->filteredBooksSql($filters);
+
+        $sql = "
+            SELECT *
+            FROM ({$filteredSql}) filtered_books
+            ORDER BY created_at DESC, id DESC
+        ";
 
         $rows = db_connect()->query($sql, $bindings)->getResultArray();
 

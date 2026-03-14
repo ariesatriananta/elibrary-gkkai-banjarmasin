@@ -15,13 +15,23 @@ $pageQueryBase = array_filter([
     <h1 class="page-title">Data Buku</h1>
     <p class="page-description">Kelola judul buku, cover, kategori, klasifikasi usia, dan copy fisik perpustakaan.</p>
   </div>
-  <a href="<?= site_url('books/create') ?>" class="panel-button">
-    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <line x1="12" y1="5" x2="12" y2="19"></line>
-      <line x1="5" y1="12" x2="19" y2="12"></line>
-    </svg>
-    Tambah Buku
-  </a>
+  <div class="flex flex-wrap gap-2">
+    <a href="<?= site_url('books/export' . (empty($pageQueryBase) ? '' : '?' . http_build_query($pageQueryBase))) ?>" class="panel-button-secondary" data-no-loading="true">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M12 3v12"></path>
+        <path d="M7 10l5 5 5-5"></path>
+        <path d="M5 21h14"></path>
+      </svg>
+      Export Excel
+    </a>
+    <a href="<?= site_url('books/create') ?>" class="panel-button">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Tambah Buku
+    </a>
+  </div>
 </div>
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -97,85 +107,94 @@ $pageQueryBase = array_filter([
     <?php endif; ?>
   </div>
 
-  <div class="books-card-grid">
-    <?php foreach ($books as $book): ?>
-      <div class="panel-card book-card overflow-hidden">
-        <div class="book-card-cover flex items-center justify-center bg-gradient-to-br <?= esc($book['cover_class']) ?>">
-          <?php if (! empty($book['cover_path'])): ?>
-            <img src="<?= base_url($book['cover_path']) ?>" alt="<?= esc($book['title']) ?>" class="h-full w-full object-cover">
-          <?php else: ?>
-            <span class="px-4 text-center text-base font-bold leading-tight text-white drop-shadow"><?= esc($book['title']) ?></span>
-          <?php endif; ?>
-        </div>
-
-        <div class="book-card-body">
-          <div class="space-y-1">
-            <h2 class="line-clamp-2 text-base font-semibold leading-snug"><?= esc($book['title']) ?></h2>
-            <p class="line-clamp-1 text-sm text-slate-500"><?= esc($book['author']) ?></p>
-          </div>
-
-          <div class="flex flex-wrap gap-2">
-            <?php if (! empty($book['category_name'])): ?>
-              <span class="surface-chip surface-chip-primary"><?= esc($book['category_name']) ?></span>
-            <?php endif; ?>
-
-            <?php if (! empty($book['age_classification_name'])): ?>
-              <span class="surface-chip surface-chip-info"><?= esc($book['age_classification_name']) ?></span>
-            <?php endif; ?>
-
-            <span class="status-badge <?= esc($book['stock_status_class']) ?>">
-              <?= esc($book['stock_status_label']) ?>
-            </span>
-          </div>
-
-          <div class="book-card-stats">
-            <div class="metric-tile text-center">
-              <p class="text-[11px] text-slate-500">Copy</p>
-              <p class="mt-1.5 text-base font-semibold"><?= esc((string) $book['total_copies']) ?></p>
-            </div>
-            <div class="metric-tile text-center">
-              <p class="text-[11px] text-slate-500">Tersedia</p>
-              <p class="mt-1.5 text-base font-semibold text-success"><?= esc((string) $book['available_copies']) ?></p>
-            </div>
-            <div class="metric-tile text-center">
-              <p class="text-[11px] text-slate-500">Dipinjam</p>
-              <p class="mt-1.5 text-base font-semibold text-primary"><?= esc((string) $book['borrowed_copies']) ?></p>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <p class="text-xs uppercase tracking-wide text-slate-400">ISBN</p>
-              <p class="mt-1 line-clamp-1 text-sm"><?= esc($book['isbn'] ?: '-') ?></p>
-            </div>
-            <div>
-              <p class="text-xs uppercase tracking-wide text-slate-400">Rak</p>
-              <p class="mt-1 line-clamp-1 text-sm"><?= esc($book['shelf_location'] ?: '-') ?></p>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-end gap-2">
-            <a href="<?= site_url('books/' . $book['id'] . '/edit') ?>" class="book-card-action-button" title="Kelola buku" aria-label="Kelola buku <?= esc($book['title']) ?>">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-            </a>
-            <form method="post" action="<?= site_url('books/' . $book['id'] . '/delete') ?>" onsubmit="return confirm('Hapus buku ini? Semua copy tanpa histori transaksi juga akan ikut terhapus.');">
-              <button type="submit" class="book-card-action-button book-card-action-button-danger" title="Hapus buku" aria-label="Hapus buku <?= esc($book['title']) ?>">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6l-1 14H6L5 6"></path>
-                  <path d="M10 11v6"></path>
-                  <path d="M14 11v6"></path>
-                  <path d="M9 6V4h6v2"></path>
-                </svg>
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    <?php endforeach; ?>
+  <div class="data-table-wrapper">
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Buku</th>
+            <th>Kategori</th>
+            <th>Klasifikasi</th>
+            <th>Stok</th>
+            <th>Status</th>
+            <th>ISBN / Rak</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($books as $book): ?>
+            <tr>
+              <td>
+                <div class="flex items-center gap-3">
+                  <div class="h-14 w-12 overflow-hidden rounded-xl border border-border bg-muted">
+                    <?php if (! empty($book['cover_path'])): ?>
+                      <img src="<?= base_url($book['cover_path']) ?>" alt="<?= esc($book['title']) ?>" class="h-full w-full object-cover">
+                    <?php else: ?>
+                      <div class="flex h-full w-full items-center justify-center bg-gradient-to-br <?= esc($book['cover_class']) ?> px-1 text-center text-sm font-bold leading-tight text-white">
+                        <?= esc(text_initials($book['title'] ?? '')) ?>
+                      </div>
+                    <?php endif; ?>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="line-clamp-2 font-medium"><?= esc($book['title']) ?></p>
+                    <p class="text-xs text-slate-500"><?= esc($book['author']) ?></p>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <?php if (! empty($book['category_name'])): ?>
+                  <span class="surface-chip surface-chip-primary"><?= esc($book['category_name']) ?></span>
+                <?php else: ?>
+                  <span class="text-slate-500">-</span>
+                <?php endif; ?>
+              </td>
+              <td>
+                <?php if (! empty($book['age_classification_name'])): ?>
+                  <span class="surface-chip surface-chip-info"><?= esc($book['age_classification_name']) ?></span>
+                <?php else: ?>
+                  <span class="text-slate-500">-</span>
+                <?php endif; ?>
+              </td>
+              <td class="text-sm text-slate-500">
+                <p>Total: <span class="font-medium text-foreground"><?= esc((string) $book['total_copies']) ?></span></p>
+                <p>Tersedia: <span class="font-medium text-success"><?= esc((string) $book['available_copies']) ?></span></p>
+                <p>Dipinjam: <span class="font-medium text-primary"><?= esc((string) $book['borrowed_copies']) ?></span></p>
+              </td>
+              <td>
+                <span class="status-badge <?= esc($book['stock_status_class']) ?>">
+                  <?= esc($book['stock_status_label']) ?>
+                </span>
+              </td>
+              <td class="text-sm text-slate-500">
+                <p><?= esc($book['isbn'] ?: '-') ?></p>
+                <p class="text-xs"><?= esc($book['shelf_location'] ?: '-') ?></p>
+              </td>
+              <td>
+                <div class="flex items-center gap-2">
+                  <a href="<?= site_url('books/' . $book['id'] . '/edit') ?>" class="book-card-action-button" title="Kelola buku" aria-label="Kelola buku <?= esc($book['title']) ?>">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <circle cx="11" cy="11" r="7"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                  </a>
+                  <form method="post" action="<?= site_url('books/' . $book['id'] . '/delete') ?>" onsubmit="return confirm('Hapus buku ini? Semua copy tanpa histori transaksi juga akan ikut terhapus.');">
+                    <button type="submit" class="book-card-action-button book-card-action-button-danger" title="Hapus buku" aria-label="Hapus buku <?= esc($book['title']) ?>">
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6l-1 14H6L5 6"></path>
+                        <path d="M10 11v6"></path>
+                        <path d="M14 11v6"></path>
+                        <path d="M9 6V4h6v2"></path>
+                      </svg>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <?php if (($pagination['total_pages'] ?? 1) > 1): ?>

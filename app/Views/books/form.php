@@ -160,7 +160,7 @@ $copyForm = session()->getFlashdata('copy_form') ?? [];
             <div class="flex h-72 items-center justify-center bg-gradient-to-br from-primary/80 to-accent/50 p-6 text-center text-white">
               <div>
                 <p class="text-sm uppercase tracking-[0.3em] text-white/70"><?= esc(library_brand_name()) ?></p>
-                <p class="mt-3 text-xl font-bold"><?= esc(old('title', $book['title'] ?? 'Belum ada cover')) ?></p>
+                <p class="mt-3 text-5xl font-bold tracking-[0.12em]"><?= esc(text_initials(old('title', $book['title'] ?? ''), 2)) ?></p>
               </div>
             </div>
           <?php endif; ?>
