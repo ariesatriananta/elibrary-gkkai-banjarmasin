@@ -23,12 +23,14 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->post('books/(:num)/copies/(:num)', 'BookController::updateCopy/$1/$2');
     $routes->post('books/(:num)/copies/(:num)/delete', 'BookController::destroyCopy/$1/$2');
     $routes->get('members', 'MemberController::index');
+    $routes->get('members/export', 'MemberController::export');
     $routes->get('members/create', 'MemberController::create');
     $routes->post('members', 'MemberController::store');
     $routes->get('members/(:num)/edit', 'MemberController::edit/$1');
     $routes->post('members/(:num)', 'MemberController::update/$1');
     $routes->post('members/(:num)/delete', 'MemberController::destroy/$1');
     $routes->get('transactions', 'TransactionController::index');
+    $routes->get('transactions/export', 'TransactionController::export');
     $routes->post('transactions/borrow', 'TransactionController::borrow');
     $routes->post('transactions/return', 'TransactionController::return');
     $routes->get('fines', 'FineController::index');

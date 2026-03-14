@@ -181,7 +181,7 @@ $historyPageQueryBase = array_filter([
 </div>
 
 <div class="transaction-panel <?= $activeTab === 'history' ? '' : 'hidden' ?>" data-panel="history">
-  <form method="get" action="<?= site_url('transactions') ?>" class="content-toolbar mb-4 grid grid-cols-1 gap-3 lg:grid-cols-[1.3fr_0.7fr_auto]">
+  <form method="get" action="<?= site_url('transactions') ?>" class="content-toolbar transactions-history-toolbar mb-4">
     <div class="relative">
       <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <circle cx="11" cy="11" r="8"></circle>
@@ -196,9 +196,17 @@ $historyPageQueryBase = array_filter([
       <option value="returned" <?= $filters['status'] === 'returned' ? 'selected' : '' ?>>Dikembalikan</option>
       <option value="lost" <?= $filters['status'] === 'lost' ? 'selected' : '' ?>>Hilang</option>
     </select>
-    <div class="flex gap-2">
+    <div class="transactions-history-actions">
       <button type="submit" class="panel-button justify-center">Filter</button>
       <a href="<?= site_url('transactions') ?>" class="panel-button-secondary justify-center">Reset</a>
+      <a href="<?= site_url('transactions/export' . (empty($historyPageQueryBase) ? '' : '?' . http_build_query($historyPageQueryBase))) ?>" class="panel-button-secondary" data-no-loading="true">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M12 3v12"></path>
+          <path d="m7 10 5 5 5-5"></path>
+          <path d="M5 21h14"></path>
+        </svg>
+        Export Excel
+      </a>
     </div>
   </form>
 

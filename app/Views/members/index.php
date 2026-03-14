@@ -13,13 +13,23 @@ $pageQueryBase = array_filter([
     <h1 class="page-title">Data Anggota</h1>
     <p class="page-description">Kelola anggota, status aktif, dan riwayat peminjaman.</p>
   </div>
-  <a href="<?= site_url('members/create') ?>" class="panel-button">
-    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <line x1="12" y1="5" x2="12" y2="19"></line>
-      <line x1="5" y1="12" x2="19" y2="12"></line>
-    </svg>
-    Tambah Anggota
-  </a>
+  <div class="flex flex-wrap items-center justify-end gap-2">
+    <a href="<?= site_url('members/export' . (empty($pageQueryBase) ? '' : '?' . http_build_query($pageQueryBase))) ?>" class="panel-button-secondary" data-no-loading="true">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M12 3v12"></path>
+        <path d="m7 10 5 5 5-5"></path>
+        <path d="M5 21h14"></path>
+      </svg>
+      Export Excel
+    </a>
+    <a href="<?= site_url('members/create') ?>" class="panel-button">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Tambah Anggota
+    </a>
+  </div>
 </div>
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -6,6 +6,9 @@ use App\Models\BookCopyModel;
 use App\Models\LoanModel;
 use App\Models\MemberModel;
 use CodeIgniter\HTTP\RedirectResponse;
+use CodeIgniter\HTTP\ResponseInterface;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class TransactionController extends BaseController
 {
@@ -107,6 +110,84 @@ class TransactionController extends BaseController
         );
 
         return redirect()->to(site_url('transactions'))->with('transaction_tab', 'borrow')->with('success', 'Peminjaman berhasil dicatat.');
+    }
+
+    public function export(): ResponseInterface
+    {
+        service('libraryService')->syncStatuses();
+
+        $filters = $this->historyFilters();
+        $history = $this->fetchHistoryForExport($filters);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Riwayat Transaksi');
+
+        $headers = [
+            'No',
+            'Tanggal Pinjam',
+            'Tanggal Jatuh Tempo',
+            'Tanggal Kembali',
+            'Anggota',
+            'Nomor Anggota',
+            'Judul Buku',
+            'Kode Copy',
+            'Status',
+            'Kondisi Kembali',
+            'Total Denda',
+            'Terbayar',
+            'Sisa Denda',
+            'Catatan',
+        ];
+
+        $sheet->fromArray($headers, null, 'A1');
+        foreach ($headers as $index => $header) {
+            $column = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($index + 1);
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        $sheet->getStyle('A1:N1')->getFont()->setBold(true);
+
+        $rowNumber = 2;
+
+        foreach ($history as $index => $row) {
+            $fineAmount = (float) ($row['fine_amount'] ?? 0);
+            $finePaidAmount = (float) ($row['fine_paid_amount'] ?? 0);
+            $openReplacementCount = (int) ($row['open_replacement_count'] ?? 0);
+
+            $sheet->fromArray([
+                $index + 1,
+                $row['borrowed_at'] ? format_indo_date($row['borrowed_at']) : '-',
+                $row['due_at'] ? format_indo_date($row['due_at']) : '-',
+                $row['returned_at'] ? format_indo_date($row['returned_at']) : '-',
+                $row['member_name'] ?: '-',
+                $row['member_number'] ?: '-',
+                $row['book_title'] ?: '-',
+                $row['copy_code'] ?: '-',
+                loan_status_label((string) ($row['status'] ?? '')),
+                $row['return_condition'] ? loan_condition_label((string) $row['return_condition']) : '-',
+                $openReplacementCount > 0 ? 'Menunggu Penggantian' : ($fineAmount > 0 ? rupiah($fineAmount) : '-'),
+                $openReplacementCount > 0 ? '-' : ($finePaidAmount > 0 ? rupiah($finePaidAmount) : '-'),
+                $openReplacementCount > 0 ? '-' : (($fineAmount - $finePaidAmount) > 0 ? rupiah($fineAmount - $finePaidAmount) : '-'),
+                $row['notes'] ?: '-',
+            ], null, 'A' . $rowNumber);
+
+            $rowNumber++;
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $tempFile = tempnam(sys_get_temp_dir(), 'transactions-export-');
+        $writer->save($tempFile);
+
+        $fileName = 'riwayat-transaksi-' . date('Y-m-d-His') . '.xlsx';
+        $content = file_get_contents($tempFile) ?: '';
+        @unlink($tempFile);
+
+        return $this->response
+            ->setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $fileName . '"')
+            ->setHeader('Cache-Control', 'max-age=0')
+            ->setBody($content);
     }
 
     public function return(): RedirectResponse
@@ -273,6 +354,47 @@ class TransactionController extends BaseController
             ->orderBy('l.borrowed_at', 'DESC')
             ->orderBy('l.id', 'DESC')
             ->limit($perPage, max(0, ($page - 1) * $perPage))
+            ->get()
+            ->getResultArray();
+    }
+
+    private function fetchHistoryForExport(array $filters): array
+    {
+        return $this->historyBaseBuilder($filters)
+            ->select("
+                l.id,
+                l.borrowed_at,
+                l.due_at,
+                l.returned_at,
+                l.return_condition,
+                l.status,
+                l.notes,
+                b.title AS book_title,
+                bc.copy_code,
+                m.full_name AS member_name,
+                m.member_number,
+                (
+                    SELECT COALESCE(SUM(f.amount), 0)
+                    FROM fines f
+                    WHERE f.loan_id = l.id
+                      AND f.fulfillment_method = 'payment'
+                ) AS fine_amount,
+                (
+                    SELECT COALESCE(SUM(f.paid_amount), 0)
+                    FROM fines f
+                    WHERE f.loan_id = l.id
+                      AND f.fulfillment_method = 'payment'
+                ) AS fine_paid_amount,
+                (
+                    SELECT COUNT(*)
+                    FROM fines f
+                    WHERE f.loan_id = l.id
+                      AND f.fine_type = 'lost'
+                      AND f.status = 'open'
+                ) AS open_replacement_count
+            ", false)
+            ->orderBy('l.borrowed_at', 'DESC')
+            ->orderBy('l.id', 'DESC')
             ->get()
             ->getResultArray();
     }

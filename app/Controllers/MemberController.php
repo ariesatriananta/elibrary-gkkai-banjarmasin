@@ -5,6 +5,9 @@ namespace App\Controllers;
 use App\Models\LoanModel;
 use App\Models\MemberModel;
 use CodeIgniter\HTTP\RedirectResponse;
+use CodeIgniter\HTTP\ResponseInterface;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class MemberController extends BaseController
 {
@@ -48,6 +51,71 @@ class MemberController extends BaseController
             'history' => [],
             'errors' => session('errors') ?? [],
         ]);
+    }
+
+    public function export(): ResponseInterface
+    {
+        service('libraryService')->syncStatuses();
+
+        $filters = $this->indexFilters();
+        $members = $this->fetchMembersForExport($filters);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Master Anggota');
+
+        $headers = [
+            'No',
+            'Nomor Anggota',
+            'Nama Lengkap',
+            'Telepon',
+            'Email',
+            'Alamat',
+            'Tanggal Bergabung',
+            'Status',
+            'Pinjaman Aktif',
+        ];
+
+        $sheet->fromArray($headers, null, 'A1');
+
+        foreach ($headers as $index => $header) {
+            $column = chr(65 + $index);
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        $sheet->getStyle('A1:I1')->getFont()->setBold(true);
+
+        $rowNumber = 2;
+
+        foreach ($members as $index => $member) {
+            $sheet->fromArray([
+                $index + 1,
+                $member['member_number'] ?: '-',
+                $member['full_name'] ?: '-',
+                $member['phone'] ?: '-',
+                $member['email'] ?: '-',
+                $member['address'] ?: '-',
+                $member['joined_at'] ? format_indo_date($member['joined_at']) : '-',
+                (int) ($member['is_active'] ?? 0) === 1 ? 'Aktif' : 'Nonaktif',
+                (int) ($member['active_loans'] ?? 0),
+            ], null, 'A' . $rowNumber);
+
+            $rowNumber++;
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $tempFile = tempnam(sys_get_temp_dir(), 'members-export-');
+        $writer->save($tempFile);
+
+        $fileName = 'master-anggota-' . date('Y-m-d-His') . '.xlsx';
+        $content = file_get_contents($tempFile) ?: '';
+        @unlink($tempFile);
+
+        return $this->response
+            ->setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $fileName . '"')
+            ->setHeader('Cache-Control', 'max-age=0')
+            ->setBody($content);
     }
 
     public function store(): RedirectResponse
@@ -210,6 +278,24 @@ class MemberController extends BaseController
 
             return $member;
         }, $rows);
+    }
+
+    private function fetchMembersForExport(array $filters): array
+    {
+        return $this->memberBaseBuilder($filters)
+            ->select("
+                m.*,
+                (
+                    SELECT COUNT(*)
+                    FROM loans l
+                    WHERE l.member_id = m.id
+                      AND l.status IN ('borrowed', 'overdue')
+                ) AS active_loans
+            ", false)
+            ->orderBy('m.created_at', 'DESC')
+            ->orderBy('m.id', 'DESC')
+            ->get()
+            ->getResultArray();
     }
 
     private function memberBaseBuilder(array $filters)
